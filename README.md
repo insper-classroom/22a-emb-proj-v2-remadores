@@ -32,11 +32,9 @@ Utilizar um controle feito do 0 para jogar jogos comuns que joga todos os dias p
 
 ### Comandos/ Feedbacks (2 pts)
 
-<!-- 
-Quais são os comandos/ operacões possíveis do seu controle?
-
-Quais os feedbacks que seu controle vai fornecer ao usuário?
--->
+- Andar para todas as direções
+- Todos os comandos relacionados ao X, Quadrado, Triângulo e Bola
+- Mexer a câmera com o analógico direito em um jogo 3D
 
 ## In/OUT (3 pts)
 
