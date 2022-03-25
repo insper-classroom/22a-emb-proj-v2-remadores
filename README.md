@@ -2,7 +2,7 @@
 
 Desenvolvendo um controle remoto.
 
-## Entrega 1
+## Entrega 1 <img src="https://img.shields.io/static/v1?label=Entrega1&message=Finalizado&color=success&style=flat-square&logo=ghost"/>
 
 ## Integrantes
 
@@ -35,7 +35,7 @@ E esse controle poderia ser utilizado para jogos de `Playstation 4` jogados no W
 
 **Suny SP4**
 
-## Usuários 
+## Usuários :bust_in_silhouette: :bust_in_silhouette:
 
 Os usuários do nosso controle possivelmente seriam:
 
@@ -45,11 +45,11 @@ Os usuários do nosso controle possivelmente seriam:
 
 Observação: isso não exclui a possibilidade de outras pessoas o utilizarem.
 
-## Software/Jogo 
+## Software/Jogo :desktop_computer: :chess_pawn:
 
 O nosso controle irá controlar como software os jogos de `Playstation 4`/ `Xbox` que podem ser emulados no Windows através do `Xbox Game Pass`. E a ideia inicial é a de testar com jogos que são principalmente de tiro : `FPS` (do inglês *First Person Shooter*).
 
-## Jornada do usuários (3 pts)
+## Jornada do usuários (3 pts) :repeat:
 
 
 ![Jornada](https://user-images.githubusercontent.com/62647438/160206110-29e15dce-e0c3-4fe6-8966-094f8ace4467.png)
@@ -67,7 +67,7 @@ E para usar o controle basta:
 
 &nbsp; &nbsp; &nbsp; :heavy_check_mark: Começar a jogar.
 
-## Comandos/ Feedbacks (2 pts)
+## Comandos/ Feedbacks (2 pts) 	:memo::back:
 
 Os comandos possíveis de nosso controle são:
 
@@ -85,7 +85,7 @@ Além disso, o usuário irá receber os seguintes feedbacks em relação aos com
 
 &nbsp; &nbsp; &nbsp; :heavy_check_mark: Quando algum dos botões for pressionado, uma luz irá piscar e apagar conforme o click do botão.
 
-## In/OUT (3 pts)
+## In/OUT (3 pts) :arrow_left::arrow_right:
 
 ### ENTRADAS:
 
@@ -117,8 +117,9 @@ Além disso, o usuário irá receber os seguintes feedbacks em relação aos com
 
 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; :black_small_square:	Racional: queremos mais uma vez mostrar ao usuário que sua ação está sendo recebida pelo controle, ou seja, quando ele clicar algum dos botões, ele irá ver que de fato o botão foi pressionado pois ele irá acender e apagar conforme o tempo do click do usuário.
 
-### Design (2 pts)
+## Design (2 pts) :pushpin::triangular_ruler:
 
-<!--
-Faca um esboco de como seria esse controle (vai ter uma etapa que terão que detalhar melhor isso).
--->
+Esboço de como seria o controle (detalharemos melhor isso em uma próxima etapa):
+
+
+![Prototipo](https://user-images.githubusercontent.com/62647438/160212921-0a505798-483a-4319-9f75-e4fe6ecadd06.jpeg)
