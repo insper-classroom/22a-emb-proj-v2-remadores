@@ -6,28 +6,29 @@ Desenvolvendo um controle remoto.
 
 ### Integrantes
 
-- Nome1
+- Henrique Martinelli Frezzatti
 - Nome2
 
 ### Ideia
 
-<!--  Descreva aqui em poucas palavras qual a ideia do seu controle. Se ele vai ser de jogo ou de aplicação -->
+  Controle com estilo de PlayStation 4, com dois analógicos, um para movimentação e outro para movimentação da câmera. Além disso, 4 botões para o X, Quadrado, Triângulo e Bola do controle. Utilizar isso em jogos de PS4 no Windows. 
 
 ### Nome
 
-<!-- De um nome ao seu controle! -->
+Suny SP4
 
 ### Usuários 
 
-<!-- Descreva aqui quem seriam os possíveis usuários deste controle. -->
+- Jogadores de videogame
+- Game Testers
 
 ### Software/Jogo 
 
-<!-- Qual software que seu controle vai controlar? -->
+Jogos de PS4/Xbox emulados no Windows pelo Xbox Game Pass. Ideia inicial: Qualquer FPS.
 
 ### Jornada do usuários (3 pts)
 
-<!-- Descreva ao menos duas jornadas de usuários distintos, é para caprichar! -->
+Utilizar um controle feito do 0 para jogar jogos comuns que joga todos os dias pelo controle comum é uma experiência nova e completa. O controle novo é intuitivo e fácil de usar, cada botão tem a respectiva cor do comando original do PS4 e isso torna a experiência muito mais próxima ao usuário.
 
 ### Comandos/ Feedbacks (2 pts)
 
@@ -39,12 +40,15 @@ Quais os feedbacks que seu controle vai fornecer ao usuário?
 
 ## In/OUT (3 pts)
 
-<!--
-Para cada Comando/ Feedback do seu controle, associe qual sensores/ atuadores pretende utilizar? Faca em formato de lista, exemplo:
+### ENTRADAS:
+- Movimentação do personagem: Joystick esquerdo (analógica)
+- Movimento da câmera do personagem: Joystick Direito (analógica)
+- 4 botões: X, Quadrado, Triângulo e Bola. (digital)
 
-- Avanca música: Push button amarelo
-- Volume da música: Fita de LED indicando potência do som
--->
+### SAÍDAS:
+- Fita de LED identificando quando um comando foi executado (digital)
+- Botão piscando para demonstrar que o controle está ligado. (digital)
+
 
 ### Design (2 pts)
 
