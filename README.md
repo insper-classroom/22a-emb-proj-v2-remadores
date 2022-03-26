@@ -12,8 +12,8 @@ Desenvolvendo um controle remoto.
 
 ## Ideia :thought_balloon: :video_game: :joystick:
 
-A ideia que tivemos foi a de fazer um controle de videograme no estilo do `Playstation 4`.  Esse controle teria duas entradas analógicas e quatro entradas digitais.
-As estradas analógicas seriam dois `Joypad's` que seriam usadsos para:
+A ideia que tivemos foi a de fazer um controle de videogame no estilo do `Playstation 4`.  Esse controle teria duas entradas analógicas e quatro entradas digitais.
+As estradas analógicas seriam dois `Joypad's` que seriam usados para:
 
 &nbsp; &nbsp; &nbsp; :heavy_check_mark: A movimentação do personagem no jogo;
 
@@ -99,7 +99,7 @@ Além disso, o usuário irá receber os seguintes feedbacks em relação aos com
 
 &nbsp; &nbsp; &nbsp; :heavy_check_mark: 4 botões: X, Quadrado, Triângulo e Bola. (digital)
 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; :black_small_square: Racional: Assim como em um controle de videogame tradicional, os botões :x:, :o:, 🔺 e 🟥 irão executar ações quando pressionados, seja ela de soltar uma arma, ou jogar uma granada, entre outras. Porém essas ações mudam de jogo para jogo. O que faremos é atrelar o click de um botão, como se estivesse pressionando o comando equivalente ao :x:, por exemplo, no computador. 
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; :black_small_square: Racional: Assim como em um controle de videogame tradicional, os botões :x:, :o:, 🔺 e 🟥 irão executar ações quando pressionados, seja ela de soltar uma arma, ou jogar uma granada, entre outras. Porém essas ações mudam de jogo para jogo. O que faremos é atrelar o click de um botão ao comando equivalente no computador. 
 
 
 ### SAÍDAS:
@@ -110,12 +110,12 @@ Além disso, o usuário irá receber os seguintes feedbacks em relação aos com
 
 &nbsp; &nbsp; &nbsp; :heavy_check_mark: Luz ligada para demonstrar que o controle está ligado. (digital)
 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; :black_small_square: Racional: Queremos que o usuário saiba que o controle está ligado e foi conectado ao computador por meio de uma luz, ou seja, antes de começar a jogar ele saberá se teve algum problema com o dispositivo ou se está tudo certo para poder começar a jogar. Assim, visualmente se um pequena luz verde for ligada, ele sabe que está tudo "pronto" para começar a se divertir. 
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; :black_small_square: Racional: Queremos que o usuário saiba que o controle está ligado e foi conectado ao computador por meio de uma luz, ou seja, antes de começar a jogar ele saberá se teve algum problema com o dispositivo ou se está tudo certo para poder começar a jogar. Assim, visualmente, se um pequena luz verde for ligada, ele sabe que está tudo "pronto" para começar a se divertir. 
 
 
 &nbsp; &nbsp; &nbsp; :heavy_check_mark: Luz pisca e apaga conforme o click do botão.
 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; :black_small_square:	Racional: queremos mais uma vez mostrar ao usuário que sua ação está sendo recebida pelo controle, ou seja, quando ele clicar algum dos botões, ele irá ver que de fato o botão foi pressionado pois ele irá acender e apagar conforme o tempo do click do usuário.
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; :black_small_square:	Racional: Queremos mais uma vez mostrar ao usuário que sua ação está sendo recebida pelo controle, ou seja, quando ele clicar em algum dos botões, ele irá ver que de fato o botão foi pressionado pois um LED irá acender e apagar conforme o tempo do click do usuário.
 
 ## Design (2 pts) :pushpin::triangular_ruler:
 
