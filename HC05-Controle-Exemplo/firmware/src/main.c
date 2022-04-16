@@ -12,12 +12,6 @@
 /************************************************************************/
 /* defines                                                              */
 /************************************************************************/
-//
-//#define JOYSTICK_INPUT_0    ADCCH_POS_PIN1
-//#define JOYSTICK_INPUT_1    ADCCH_POS_PIN2
-//#define JOYSTICK_INPUT_2    ADCCH_POS_PIN3
-//#define JOYSTICK_INPUT_3    ADCCH_POS_PIN4
-
 
 // LEDs
 #define LED_PIO      PIOC
@@ -36,11 +30,21 @@
 #define BUT_IDX      30
 #define BUT_IDX_MASK (1 << BUT_IDX)
 
+#define BUT1_PIO      PIOA
+#define BUT1_PIO_ID   ID_PIOA
+#define BUT1_IDX      6
+#define BUT1_IDX_MASK (1 << BUT1_IDX)
+
 // mexer no X
-#define VRX_PIO      PIOD
-#define VRX_PIO_ID   ID_PIOD
-#define VRX_IDX      30
-#define VRX_IDX_MASK (1 << VRX_IDX)
+#define AFEC_VRX AFEC1
+#define AFEC_VRX_ID ID_AFEC1
+#define AFEC_VRX_CHANNEL 5 // Canal do pino PC30
+
+// mexer no Y
+#define AFEC_VRY AFEC0
+#define AFEC_VRY_ID ID_AFEC0
+#define AFEC_VRY_CHANNEL 5 // Canal do pino PB2
+
 
 // usart (bluetooth ou serial)
 // Descomente para enviar dados
@@ -63,6 +67,19 @@
 #define TASK_BLUETOOTH_STACK_SIZE            (4096/sizeof(portSTACK_TYPE))
 #define TASK_BLUETOOTH_STACK_PRIORITY        (tskIDLE_PRIORITY)
 
+#define TASK_ADC_STACK_SIZE (1024*10 / sizeof(portSTACK_TYPE))
+#define TASK_ADC_STACK_PRIORITY (tskIDLE_PRIORITY)
+
+#define TASK_PROC_STACK_SIZE (1024*10 / sizeof(portSTACK_TYPE))
+#define TASK_PROC_STACK_PRIORITY (tskIDLE_PRIORITY)
+
+#define TASK_ADC2_STACK_SIZE (1024*10 / sizeof(portSTACK_TYPE))
+#define TASK_ADC2_STACK_PRIORITY (tskIDLE_PRIORITY)
+
+#define TASK_PROC2_STACK_SIZE (1024*10 / sizeof(portSTACK_TYPE))
+#define TASK_PROC2_STACK_PRIORITY (tskIDLE_PRIORITY)
+
+
 /************************************************************************/
 /* prototypes                                                           */
 /************************************************************************/
@@ -82,9 +99,22 @@ extern void xPortSysTickHandler(void);
 /* variaveis globais                                                    */
 /************************************************************************/
 
+volatile float adc_vx;
+volatile float adc_vy;
+
 /************************************************************************/
 /* RTOS application HOOK                                                */
 /************************************************************************/
+
+typedef struct {
+	uint value;
+} adcData;
+
+/** Queue for msg log send data */
+QueueHandle_t xQueueADC;
+QueueHandle_t xQueueADCProc;
+QueueHandle_t xQueueADC2;
+QueueHandle_t xQueueADCProc2;
 
 void configure_pio_input(Pio *pio, const pio_type_t ul_type, const uint32_t ul_mask, const uint32_t ul_attribute, uint32_t ul_id){
 	pmc_enable_periph_clk(ul_id);
@@ -136,12 +166,15 @@ void io_init(void) {
 	pmc_enable_periph_clk(LED_PIO_ID);
 	pmc_enable_periph_clk(BUT_PIO_ID);
 	
-	configure_pio_input(VRX_PIO, PIO_INPUT, VRX_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, VRX_PIO_ID);
+	pmc_enable_periph_clk(BUT1_PIO_ID);
+	
+	//configure_pio_input(VRX_PIO, PIO_INPUT, VRX_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, VRX_PIO_ID);
 
 
 	// Configura Pinos
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 	pio_configure(BUT_PIO, PIO_INPUT, BUT_IDX_MASK, PIO_PULLUP);
+	pio_configure(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK, PIO_PULLUP);
 }
 
 static void configure_console(void) {
@@ -235,9 +268,214 @@ int hc05_init(void) {
 	vTaskDelay( 500 / portTICK_PERIOD_MS);
 }
 
+
+static void AFEC_vrx_Callback(void) {
+	adcData adc;
+	adc.value = afec_channel_get_value(AFEC_VRX, AFEC_VRX_CHANNEL);
+	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	xQueueSendFromISR(xQueueADCProc, &adc, &xHigherPriorityTaskWoken);
+}
+
+static void AFEC_vry_Callback(void) {
+	adcData adc;
+	adc.value = afec_channel_get_value(AFEC_VRY, AFEC_VRY_CHANNEL);
+	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	xQueueSendFromISR(xQueueADCProc2, &adc, &xHigherPriorityTaskWoken);
+}
+
+void TC1_Handler(void) {
+	volatile uint32_t ul_dummy;
+
+	ul_dummy = tc_get_status(TC0, 1);
+
+	/* Avoid compiler warning */
+	UNUSED(ul_dummy);
+
+	/* Selecina canal e inicializa conversão */
+	afec_channel_enable(AFEC_VRX, AFEC_VRX_CHANNEL);
+	afec_start_software_conversion(AFEC_VRX);
+	
+	afec_channel_enable(AFEC_VRY, AFEC_VRY_CHANNEL);
+	afec_start_software_conversion(AFEC_VRY);
+
+}
+
+
+
+static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel,
+                            afec_callback_t callback) {
+  /*************************************
+   * Ativa e configura AFEC
+   *************************************/
+  /* Ativa AFEC - 0 */
+  afec_enable(afec);
+
+  /* struct de configuracao do AFEC */
+  struct afec_config afec_cfg;
+
+  /* Carrega parametros padrao */
+  afec_get_config_defaults(&afec_cfg);
+
+  /* Configura AFEC */
+  afec_init(afec, &afec_cfg);
+
+  /* Configura trigger por software */
+  afec_set_trigger(afec, AFEC_TRIG_SW);
+
+  /*** Configuracao específica do canal AFEC ***/
+  struct afec_ch_config afec_ch_cfg;
+  afec_ch_get_config_defaults(&afec_ch_cfg);
+  afec_ch_cfg.gain = AFEC_GAINVALUE_0;
+  afec_ch_set_config(afec, afec_channel, &afec_ch_cfg);
+
+  /*
+  * Calibracao:
+  * Because the internal ADC offset is 0x200, it should cancel it and shift
+  down to 0.
+  */
+  afec_channel_set_analog_offset(afec, afec_channel, 0x200);
+
+  /***  Configura sensor de temperatura ***/
+  struct afec_temp_sensor_config afec_temp_sensor_cfg;
+
+  afec_temp_sensor_get_config_defaults(&afec_temp_sensor_cfg);
+  afec_temp_sensor_set_config(afec, &afec_temp_sensor_cfg);
+
+  /* configura IRQ */
+  afec_set_callback(afec, afec_channel, callback, 1);
+  NVIC_SetPriority(afec_id, 4);
+  NVIC_EnableIRQ(afec_id);
+}
+
+
+
+void TC_init(Tc *TC, int ID_TC, int TC_CHANNEL, int freq) {
+	uint32_t ul_div;
+	uint32_t ul_tcclks;
+	uint32_t ul_sysclk = sysclk_get_cpu_hz();
+
+	pmc_enable_periph_clk(ID_TC);
+
+	tc_find_mck_divisor(freq, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);
+	tc_init(TC, TC_CHANNEL, ul_tcclks | TC_CMR_CPCTRG);
+	tc_write_rc(TC, TC_CHANNEL, (ul_sysclk / ul_div) / freq);
+
+	NVIC_SetPriority((IRQn_Type)ID_TC, 4);
+	NVIC_EnableIRQ((IRQn_Type)ID_TC);
+	tc_enable_interrupt(TC, TC_CHANNEL, TC_IER_CPCS);
+}
+
+
+
 /************************************************************************/
 /* TASKS                                                                */
 /************************************************************************/
+
+static void task_proc(void *pvParameters){
+	config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
+
+	TC_init(TC0, ID_TC1, 1, 10);
+	tc_start(TC0, 1);
+
+	// variável para recever dados da fila
+	adcData adc;
+	uint valores[5];
+	int i = 0;
+	float media;
+	uint temp;
+
+	while (1) {
+		if (xQueueReceive(xQueueADCProc, &(adc), 1000)) {
+			valores[i] = adc.value;
+			printf("X: %d \n", adc.value);		
+			i++;
+			
+		} while (i >= 5){
+			uint soma = 0;
+
+			for (int j = 0; j < 5; j++){
+				soma += valores[j];
+			}
+			
+			media = (soma/5.0);
+
+			xQueueSend(xQueueADC, (void *)&media, 10);
+			
+			for (int j = 0; j < 4; j++){
+				temp = valores[j+1];
+				valores[j] = temp;
+			}
+			
+			if (xQueueReceive(xQueueADCProc, &(adc), 1000)){
+				valores[4] = adc.value;
+			}
+			
+		}
+		
+	}
+}
+
+static void task_proc2(void *pvParameters){
+	config_AFEC_pot(AFEC_VRY, AFEC_VRY_ID, AFEC_VRY_CHANNEL, AFEC_vry_Callback);
+
+	TC_init(TC0, ID_TC1, 1, 10);
+	tc_start(TC0, 1);
+	
+	adcData adc2;
+	uint valores2[5];
+	int i = 0;
+	float media2;
+	uint temp2;
+
+	while (1) {
+		if (xQueueReceive(xQueueADCProc2, &(adc2), 1000)){
+			valores2[i] = adc2.value;
+			printf("Y: %d \n", adc2.value );
+			i++;
+			
+		} while (i >= 5){
+			uint soma2 = 0;
+
+			for (int j = 0; j < 5; j++){
+				soma2 += valores2[j];
+			}
+			
+			media2 = (soma2/5.0);
+
+			xQueueSend(xQueueADC2,(void *)&media2, 10);
+			
+			for (int j = 0; j < 4; j++){
+				temp2 = valores2[j+1];
+				valores2[j] = temp2;
+			}
+			
+			if (xQueueReceive(xQueueADCProc2, &(adc2), 1000)){
+				valores2[4] = adc2.value;
+			}
+			
+		}
+		
+	}
+}
+
+
+static void task_adc(void *pvParameters) {
+
+	// variável para recever dados da fila
+	//float adc;
+
+	while (1) {
+		if (xQueueReceive(xQueueADC, &(adc_vx), 1000)) {
+			printf("ADCX: %f \n", adc_vx);
+		} if (xQueueReceive(xQueueADC2, &(adc_vy), 1000)) {
+			printf("ADCY: %f \n", adc_vy);
+		}
+		 else {
+			printf("Nao chegou um novo dado em 1 segundo vx \n");
+		}
+	}
+}
+
 
 void task_bluetooth(void) {
 	printf("Task Bluetooth started \n");
@@ -249,34 +487,164 @@ void task_bluetooth(void) {
 	// configura LEDs e Botões
 	io_init();
 
-	char button1 = '0';
+
 	char eof = 'X';
+	
+	char button_high = '1';
+	char button_low = '0';
+	char button1 = '0';
+	char button2 = '0';
+	char vx_esquerda = '0';
+	char vx_direita = '0';
+	char vy_cima = '0';
+	char vy_baixo = '0';
+
+	char head1 =  'O';
+	char head2 =  'Z';
+	char head_vx_esquerda = 'Y';
+	char head_vx_direita = 'W';
+	char head_vy_cima = 'S';
+	char head_vy_baixo = 'T';
+
 
 	// Task não deve retornar.
 	while(1) {
 		// atualiza valor do botão
 		if(pio_get(BUT_PIO, PIO_INPUT, BUT_IDX_MASK) == 0) {
-			button1 = '1';
+			head1 = 'A';
+			button1 = button_high;
 		} else {
-			button1 = '0';
+			head1 = 'A';
+			button1 = button_low;
 		}
+		
+		if(pio_get(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK) == 0){
+			head2 = 'B';
+			button2 = button_high;
+		} else {
+			head2 = 'B';
+			button2 = button_low;
+		}
+		
+		if (adc_vx <= 50){
+			head_vx_esquerda = 'L';
+			vx_esquerda = '1';
+		} else {
+			head_vx_esquerda = 'L';
+			vx_esquerda = '0';
+		}
+		
+		if (adc_vx >= 3500){
+			head_vx_direita = 'R';
+			vx_direita = '1';
+		} else {
+			head_vx_direita = 'R';
+			vx_direita = '0';
+		}
+		
+		if (adc_vy <= 20){
+			head_vy_cima= 'U';
+			vy_cima = '1';
+		} else {
+			head_vy_cima= 'U';
+			vy_cima = '0';
+		}
+		
+		if (adc_vy >= 3500){
+			head_vy_baixo = 'D';
+			vy_baixo = '1';
+		} else {
+			head_vy_baixo = 'D';
+			vy_baixo = '0';
+		}
+	
+		//char protocol_status[20];
+		//sprintf(protocol_status, "%d%d", button1, button2);
+		
+		
+		usart_write(USART_COM, head1);
 
-		// envia status botão
+
 		while(!usart_is_tx_ready(USART_COM)) {
 			vTaskDelay(10 / portTICK_PERIOD_MS);
 		}
+
 		usart_write(USART_COM, button1);
 		
 		// envia fim de pacote
 		while(!usart_is_tx_ready(USART_COM)) {
 			vTaskDelay(10 / portTICK_PERIOD_MS);
 		}
+		
+		usart_write(USART_COM, head2);
+		
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+
+		usart_write(USART_COM, button2);
+		
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+		
+		usart_write(USART_COM, head_vx_direita);
+		
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+		
+		usart_write(USART_COM, vx_direita);
+		
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+		
+		usart_write(USART_COM, head_vx_esquerda);
+		
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+		
+		usart_write(USART_COM, vx_esquerda);
+		
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+			
+		usart_write(USART_COM, head_vy_cima);
+			
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+			
+		usart_write(USART_COM, vy_cima);
+		
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+		
+		usart_write(USART_COM, head_vy_baixo);
+		
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+		
+		usart_write(USART_COM, vy_baixo);
+		
+		// envia fim de pacote
+		while(!usart_is_tx_ready(USART_COM)) {
+			vTaskDelay(10 / portTICK_PERIOD_MS);
+		}
+		
 		usart_write(USART_COM, eof);
 
 		// dorme por 500 ms
-		vTaskDelay(50 / portTICK_PERIOD_MS);
+		vTaskDelay(100 / portTICK_PERIOD_MS);
 	}
 }
+
+
 
 /************************************************************************/
 /* main                                                                 */
@@ -292,17 +660,45 @@ int main(void) {
 
 	/* Create task to make led blink */
 	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
+	
+	xQueueADC = xQueueCreate(100, sizeof(adcData));
+	if (xQueueADC == NULL)
+		printf("falha em criar a queue xQueueADC \n");
+	
+	xQueueADCProc = xQueueCreate(100, sizeof(adcData));
+	if (xQueueADCProc == NULL)
+		printf("falha em criar a queue xQueueADC \n");
+
+	if (xTaskCreate(task_adc, "ADC", TASK_ADC_STACK_SIZE, NULL,
+	TASK_ADC_STACK_PRIORITY, NULL) != pdPASS) {
+		printf("Failed to create test ADC task\r\n");
+	}
+	
+	if (xTaskCreate(task_proc, "proc", TASK_PROC_STACK_SIZE, NULL,
+	TASK_PROC_STACK_PRIORITY, NULL) != pdPASS) {
+		printf("Failed to create test ADC task\r\n");
+	}
+	
+	if (xTaskCreate(task_proc2, "proc2", TASK_PROC2_STACK_SIZE, NULL,
+	TASK_PROC2_STACK_PRIORITY, NULL) != pdPASS) {
+		printf("Failed to create test ADC task\r\n");
+	}
+	
+	
+	xQueueADC2 = xQueueCreate(100, sizeof(adcData));
+	if (xQueueADC2 == NULL)
+	printf("falha em criar a queue xQueueADC \n");
+	
+	xQueueADCProc2 = xQueueCreate(100, sizeof(adcData));
+	if (xQueueADCProc2 == NULL)
+	printf("falha em criar a queue xQueueADC \n");
+
 
 	/* Start the scheduler. */
 	vTaskStartScheduler();
 
 
 	while(1){
-		//if (!pio_get(VRX_PIO, PIO_INPUT, VRX_IDX_MASK)){
-			//printf("Para cima");
-		//} else if (pio_get(VRX_PIO, PIO_INPUT, VRX_IDX_MASK)){
-			//printf("Para baixo");
-		//}
 	}
 
 	/* Will only get here if there was insufficient memory to create the idle task. */

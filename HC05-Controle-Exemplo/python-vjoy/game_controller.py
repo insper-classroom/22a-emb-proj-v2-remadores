@@ -7,6 +7,11 @@ import pyvjoy # Windows apenas
 class MyControllerMap:
     def __init__(self):
         self.button = {'A': 1}
+        self.button2 = {'B': 2}
+        self.button3 = {'R' : 3}
+        self.button4 = {'L' : 4}
+        self.button5 = {'U' : 5}
+        self.button6 = {'D': 6}
 
 
 class SerialControllerInterface:
@@ -19,22 +24,61 @@ class SerialControllerInterface:
         self.ser = serial.Serial(port, baudrate=baudrate)
         self.mapping = MyControllerMap()
         self.j = pyvjoy.VJoyDevice(1)
-        self.incoming = '0'
+        self.incoming = ''
+
+    def Convert(lst):
+        res_dct = {lst[i]: lst[i + 1] for i in range(0, len(lst), 2)}
+        return res_dct
+
 
     def update(self):
         ## Sync protocol
+
+        data_lista = []
+
         while self.incoming != b'X':
-            self.incoming = self.ser.read()
+            if self.incoming != '':
+                data_lista.append(self.incoming)
             logging.debug("Received INCOMING: {}".format(self.incoming))
+            self.incoming = self.ser.read()
 
-        data = self.ser.read()
-        logging.debug("Received DATA: {}".format(data))
+            # logging.debug("Received DATA: {}".format(data))
 
-        if data == b'1':
+        # data = self.ser.read()
+        dict = SerialControllerInterface.Convert(data_lista)
+        # print(dict)
+        if dict[b'A'] == b'1':
             logging.info("Sending press")
             self.j.set_button(self.mapping.button['A'], 1)
-        elif data == b'0':
+        elif dict[b'A'] == b'0':
             self.j.set_button(self.mapping.button['A'], 0)
+        if dict[b'B'] == b'1':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button2['B'], 1)
+        elif dict[b'B'] == b'0':
+            self.j.set_button(self.mapping.button2['B'], 0)
+        if dict[b'R'] == b'1':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button3['R'], 1)
+        elif dict[b'R'] == b'0':
+            self.j.set_button(self.mapping.button3['R'], 0)
+        if dict[b'L'] == b'1':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button4['L'], 1)
+        elif dict[b'L'] == b'0':
+            self.j.set_button(self.mapping.button4['L'], 0)
+        
+        if dict[b'U'] == b'1':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button5['U'], 1)
+        elif dict[b'U'] == b'0':
+            self.j.set_button(self.mapping.button5['U'], 0)
+        if dict[b'D'] == b'1':
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button6['D'], 1)
+        elif dict[b'D'] == b'0':
+            self.j.set_button(self.mapping.button6['D'], 0)
+
 
         self.incoming = self.ser.read()
 
