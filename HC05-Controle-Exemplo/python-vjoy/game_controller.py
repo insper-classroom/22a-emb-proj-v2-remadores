@@ -37,12 +37,29 @@ class SerialControllerInterface:
         data_lista = []
 
         while self.incoming != b'X':
-            if self.incoming != '':
-                data_lista.append(self.incoming)
-            logging.debug("Received INCOMING: {}".format(self.incoming))
             self.incoming = self.ser.read()
+            logging.debug("Received INCOMING: {}".format(self.incoming))
+
+        dataHead = self.ser.read()
+        dataMSB = self.ser.read()
+        dataLSB = self.ser.read()
+
+        dataOriginal = int.from_bytes(dataMSB + dataLSB, "big")
+        
+        if dataHead == b'h':
+            self.j.set_axis(pyvjoy.HID_USAGE_X, dataOriginal*8)
+            print(int.from_bytes(dataMSB + dataLSB, "big"))
+
+        if dataHead == b'y':
+            self.j.set_axis(pyvjoy.HID_USAGE_Y, dataOriginal*8)
+            print(int.from_bytes(dataMSB + dataLSB, "big"))
+
 
             # logging.debug("Received DATA: {}".format(data))
+
+        self.incoming = self.ser.read()
+
+        return True
 
         # data = self.ser.read()
         dict = SerialControllerInterface.Convert(data_lista)
@@ -63,7 +80,7 @@ class SerialControllerInterface:
         elif dict[b'R'] == b'0':
             self.j.set_button(self.mapping.button3['R'], 0)
         if dict[b'L'] == b'1':
-            logging.info("Sending press")
+            logging.info("Sending prCCCess")
             self.j.set_button(self.mapping.button4['L'], 1)
         elif dict[b'L'] == b'0':
             self.j.set_button(self.mapping.button4['L'], 0)
