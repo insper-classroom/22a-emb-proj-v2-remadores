@@ -6,12 +6,8 @@ import pyvjoy # Windows apenas
 
 class MyControllerMap:
     def __init__(self):
-        self.button = {'A': 1}
-        self.button2 = {'B': 2}
-        self.button3 = {'R' : 3}
-        self.button4 = {'L' : 4}
-        self.button5 = {'U' : 5}
-        self.button6 = {'D': 6}
+        self.button = {'A': 1, 'B': 2}
+
 
 
 class SerialControllerInterface:
@@ -45,17 +41,34 @@ class SerialControllerInterface:
         dataLSB = self.ser.read()
 
         dataOriginal = int.from_bytes(dataMSB + dataLSB, "big")
+
+        # print ("BUT: least", dataLSB)
+        # print ("BUT: most", dataMSB)
+        print ("BUT: head", dataHead)
+        print(dataOriginal)
         
         if dataHead == b'h':
             self.j.set_axis(pyvjoy.HID_USAGE_X, dataOriginal*8)
-            print(int.from_bytes(dataMSB + dataLSB, "big"))
+            # print(int.from_bytes(dataMSB + dataLSB, "big"))
 
-        if dataHead == b'y':
+        elif dataHead == b'y':
             self.j.set_axis(pyvjoy.HID_USAGE_Y, dataOriginal*8)
-            print(int.from_bytes(dataMSB + dataLSB, "big"))
+            # print(int.from_bytes(dataMSB + dataLSB, "big"))
+        
+        else:
+            head = dataHead.decode("utf-8") 
+            button = int.from_bytes(dataLSB, "big")
+            print(head)
+            print(button)
+            self.j.set_button(self.mapping.button[head], button)
 
+        # if dataHead == b'A':
+        #     head = dataHead.decode("utf-8") 
+        #     button = int.from_bytes(dataLSB, "big")
+        #     print(head)
+        #     print(button)
+        #     self.j.set_button(self.mapping.button[head], button)
 
-            # logging.debug("Received DATA: {}".format(data))
 
         self.incoming = self.ser.read()
 

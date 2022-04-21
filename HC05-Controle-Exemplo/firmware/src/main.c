@@ -107,17 +107,18 @@ typedef struct {
 	uint value;
 } adcData;
 
-/** Queue for msg log send data */
-QueueHandle_t xQueueADC;
-QueueHandle_t xQueuexX1;
-QueueHandle_t xQueueADC2;
-QueueHandle_t xQueueY1;
+typedef struct {
+	char head;
+	char value;
+	
+} adcDataBut;
 
-void configure_pio_input(Pio *pio, const pio_type_t ul_type, const uint32_t ul_mask, const uint32_t ul_attribute, uint32_t ul_id){
-	pmc_enable_periph_clk(ul_id);
-	pio_configure(pio, ul_type, ul_mask, ul_attribute);
-	pio_set_debounce_filter(pio, ul_mask, 60);
-}
+
+/** Queue for msg log send data */
+QueueHandle_t xQueuexX1;
+QueueHandle_t xQueueY1;
+QueueHandle_t xQueueBut;
+
 
 /* Called if stack overflow during execution */
 extern void vApplicationStackOverflowHook(xTaskHandle *pxTask,
@@ -157,21 +158,76 @@ extern void vApplicationMallocFailedHook(void) {
 /* funcoes                                                              */
 /************************************************************************/
 
+
+void configure_pio_input(Pio *pio, const pio_type_t ul_type, const uint32_t ul_mask, const uint32_t ul_attribute, uint32_t ul_id){
+	pmc_enable_periph_clk(ul_id);
+	pio_configure(pio, ul_type, ul_mask, ul_attribute);
+	pio_set_debounce_filter(pio, ul_mask, 60);
+}
+
+void configure_interruption(Pio *pio, uint32_t ul_id, const uint32_t ul_mask,  uint32_t ul_attr, void (*p_handler) (uint32_t, uint32_t), uint32_t priority){
+	pio_handler_set(pio, ul_id, ul_mask , ul_attr, p_handler);
+	pio_enable_interrupt(pio, ul_mask);
+	pio_get_interrupt_status(pio);
+	NVIC_EnableIRQ(ul_id);
+	NVIC_SetPriority(ul_id, priority);
+}
+
+void but_amarelo_callback(){
+	adcDataBut but_amarelo_data;
+	
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	char head_amarelo = 'A';
+	char but_amarelo;
+	
+	if(pio_get(BUT_PIO, PIO_INPUT, BUT_IDX_MASK) == 0) {
+		but_amarelo = 1;
+	} else {
+		but_amarelo = 0;
+	}
+	
+	but_amarelo_data.value = but_amarelo;
+	but_amarelo_data.head = head_amarelo;
+	
+	xQueueSendFromISR(xQueueBut, &but_amarelo_data, xHigherPriorityTaskWoken);
+}
+
+void but_verde_callback(){
+	adcDataBut but_verde_data;
+	
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	char head_verde = 'B';
+	char but_verde;
+	
+	if (pio_get(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK) == 0){
+		but_verde = 1;
+	} else{
+		but_verde = 0;
+	}
+	
+	but_verde_data.value = but_verde;
+	but_verde_data.head = head_verde;
+	
+	xQueueSendFromISR(xQueueBut, &but_verde_data, xHigherPriorityTaskWoken);
+}
+
+
 void io_init(void) {
 
 	// Ativa PIOs
 	pmc_enable_periph_clk(LED_PIO_ID);
 	pmc_enable_periph_clk(BUT_PIO_ID);
-	
 	pmc_enable_periph_clk(BUT1_PIO_ID);
-	
-	//configure_pio_input(VRX_PIO, PIO_INPUT, VRX_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, VRX_PIO_ID);
 
 
 	// Configura Pinos
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
-	pio_configure(BUT_PIO, PIO_INPUT, BUT_IDX_MASK, PIO_PULLUP);
-	pio_configure(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK, PIO_PULLUP);
+
+	configure_pio_input(BUT_PIO, PIO_INPUT, BUT_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT_PIO_ID);
+	configure_interruption(BUT_PIO, BUT_PIO_ID, BUT_IDX_MASK, PIO_IT_EDGE, but_amarelo_callback, 4);
+	  
+	configure_pio_input(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT1_PIO_ID);
+	configure_interruption(BUT1_PIO, BUT1_PIO_ID, BUT1_IDX_MASK, PIO_IT_EDGE, but_verde_callback, 4);
 }
 
 static void configure_console(void) {
@@ -280,6 +336,7 @@ static void AFEC_vry_Callback(void) {
 	xQueueSendFromISR(xQueueY1, &adc, &xHigherPriorityTaskWoken);
 }
 
+
 void TC1_Handler(void) {
 	volatile uint32_t ul_dummy;
 
@@ -380,7 +437,7 @@ static void task_proc(void *pvParameters){
 	while (1) {
 		if (xQueueReceive(xQueuexX1, &(adc), 1000)) {
 			//printf("ADC X: %d \n", adc);
-		} else {
+			} else {
 			//printf("Nao chegou um novo dado em 1 segundo");
 		}
 	}
@@ -405,6 +462,38 @@ static void task_proc2(void *pvParameters){
 	}
 }
 
+void send_data_uart(adcData adc_data, char head, char eof){
+	usart_write(USART_COM, head);
+	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
+	
+	usart_write(USART_COM,  (adc_data.value >> 8));
+	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
+	
+	usart_write(USART_COM,  (adc_data.value & 0x00ff));
+	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
+	
+	usart_write(USART_COM, eof);
+	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
+
+}
+
+void send_data_but_uart(char adc_head, char but_flag, char eof){
+	
+	printf("%d \n", but_flag);
+
+	usart_write(USART_COM, adc_head);
+	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
+	
+	usart_write(USART_COM, 0);
+	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
+	
+	usart_write(USART_COM,  but_flag);
+	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
+	
+	usart_write(USART_COM, eof);
+	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
+}
+
 
 void task_bluetooth(void) {
 	printf("Task Bluetooth started \n");
@@ -416,190 +505,30 @@ void task_bluetooth(void) {
 	// configura LEDs e Botões
 	io_init();
 
-
 	char eof = 'X';
+	char head_x = 'h';
+	char head_y = 'y';
 	
-	char button_high = '1';
-	char button_low = '0';
-	char button1 = '0';
-	char button2 = '0';
-	char vx_esquerda = '0';
-	char vx_direita = '0';
-	char vy_cima = '0';
-	char vy_baixo = '0';
-
-	char head1 =  'O';
-	char head2 =  'Z';
-	char head_vx_esquerda = 'Y';
-	char head_vx_direita = 'W';
-	char head_vy_cima = 'S';
-	char head_vy_baixo = 'T';
-
+	adcDataBut but_data;
 	adcData adcX1;
 	adcData adcY1;
-	
+
+
 	// Task não deve retornar.
 	while(1) {
-
-	if (xQueueReceive(xQueuexX1, &(adcX1), 1000)) {
-		usart_write(USART_COM, 'h');
-		while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
-		
-		usart_write(USART_COM,  (adcX1.value >> 8));
-		while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
-		
-		usart_write(USART_COM,  (adcX1.value & 0x00ff));
-		while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}		
-		
-		usart_write(USART_COM, eof);
-		while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
-
+		if (xQueueReceive(xQueuexX1, &(adcX1), 1000)) {
+			send_data_uart(adcX1, head_x, eof);
+		}
+		if (xQueueReceive(xQueueY1, &(adcY1), 1000)) {
+			send_data_uart(adcY1, head_y, eof);
+		}
+		if (xQueueReceive(xQueueBut, &(but_data), 2)) {
+			send_data_but_uart(but_data.head, but_data.value, eof);
+		}
+	
 	}
 	
-	if (xQueueReceive(xQueueY1, &(adcY1), 1000)) {
-		usart_write(USART_COM, 'y');
-		while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
-		
-		usart_write(USART_COM,  (adcY1.value >> 8));
-		while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
-		
-		usart_write(USART_COM,  (adcY1.value & 0x00ff));
-		while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
-		
-		usart_write(USART_COM, eof);
-		while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
-
-	}
-
-
-		// atualiza valor do botão
-		if(pio_get(BUT_PIO, PIO_INPUT, BUT_IDX_MASK) == 0) {
-			head1 = 'A';
-			button1 = button_high;
-		} else {
-			head1 = 'A';
-			button1 = button_low;
-		}
-		
-		if(pio_get(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK) == 0){
-			head2 = 'B';
-			button2 = button_high;
-		} else {
-			head2 = 'B';
-			button2 = button_low;
-		}
-		
-		//if (adc_vx <= 50){
-			//head_vx_esquerda = 'L';
-			//vx_esquerda = '1';
-		//} else {
-			//head_vx_esquerda = 'L';
-			//vx_esquerda = '0';
-		//}
-		//
-		//if (adc_vx >= 3500){
-			//head_vx_direita = 'R';
-			//vx_direita = '1';
-		//} else {
-			//head_vx_direita = 'R';
-			//vx_direita = '0';
-		//}
-		//
-		//if (adc_vy <= 20){
-			//head_vy_cima= 'U';
-			//vy_cima = '1';
-		//} else {
-			//head_vy_cima= 'U';
-			//vy_cima = '0';
-		//}
-		//
-		//if (adc_vy >= 3500){
-			//head_vy_baixo = 'D';
-			//vy_baixo = '1';
-		//} else {
-			//head_vy_baixo = 'D';
-			//vy_baixo = '0';
-		//}
-	//
-		//char protocol_status[20];
-		//sprintf(protocol_status, "%d%d", button1, button2);
-		
-// 		
-// 		usart_write(USART_COM, head1);
-// 
-// 
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 
-// 		usart_write(USART_COM, button1);
-// 		
-// 		// envia fim de pacote
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 		
-// 		usart_write(USART_COM, head2);
-// 		
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 
-// 		usart_write(USART_COM, button2);
-// 		
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-		
-		
-			
-// 		usart_write(USART_COM, head_vx_direita);
-// 		
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 		
-// 		usart_write(USART_COM, vx_direita);
-// 		
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 		
-// 		usart_write(USART_COM, head_vx_esquerda);
-// 		
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 		
-// 		usart_write(USART_COM, vx_esquerda);
-// 		
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 			
-// 		usart_write(USART_COM, head_vy_cima);
-// 			
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 			
-// 		usart_write(USART_COM, vy_cima);
-// 		
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 		
-// 		usart_write(USART_COM, head_vy_baixo);
-// 		
-// 		while(!usart_is_tx_ready(USART_COM)) {
-// 			vTaskDelay(10 / portTICK_PERIOD_MS);
-// 		}
-// 		
-// 		usart_write(USART_COM, vy_baixo);
-// 	
-		// dorme por 500 ms
-		//vTaskDelay(100 / portTICK_PERIOD_MS);
-	}
+	//vTaskDelay(10 / portTICK_PERIOD_MS);
 }
 
 
@@ -621,11 +550,16 @@ int main(void) {
 	
 	xQueuexX1 = xQueueCreate(100, sizeof(adcData));
 	if (xQueuexX1 == NULL)
-		printf("falha em criar a queue xQueueADC \n");
+		printf("falha em criar a queue xQueuexX1");
 		
 	xQueueY1 = xQueueCreate(100, sizeof(adcData));
 	if (xQueueY1 == NULL)
-	printf("falha em criar a queue xQueueADC \n");
+	printf("falha em criar a queue xQueueY1 \n");
+	
+			
+	xQueueBut = xQueueCreate(100, sizeof(adcData));
+	if (xQueueBut == NULL)
+	printf("falha em criar a queue xQueueBut \n");
 
 
 	if (xTaskCreate(task_proc, "proc", TASK_PROC_STACK_SIZE, NULL,
