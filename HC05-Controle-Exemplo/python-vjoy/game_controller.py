@@ -8,13 +8,7 @@ class MyControllerMap:
     def __init__(self):
         self.button = {'A': 1, 'B': 2}
 
-
-
 class SerialControllerInterface:
-
-    # Protocolo
-    # byte 1 -> Botão 1 (estado - Apertado 1 ou não 0)
-    # byte 2 -> EOP - End of Packet -> valor reservado 'X'
 
     def __init__(self, port, baudrate):
         self.ser = serial.Serial(port, baudrate=baudrate)
@@ -30,8 +24,6 @@ class SerialControllerInterface:
     def update(self):
         ## Sync protocol
 
-        data_lista = []
-
         while self.incoming != b'X':
             self.incoming = self.ser.read()
             logging.debug("Received INCOMING: {}".format(self.incoming))
@@ -44,8 +36,8 @@ class SerialControllerInterface:
 
         # print ("BUT: least", dataLSB)
         # print ("BUT: most", dataMSB)
-        print ("BUT: head", dataHead)
-        print(dataOriginal)
+        # print ("BUT: head", dataHead)
+        # print(dataOriginal)
         
         if dataHead == b'h':
             self.j.set_axis(pyvjoy.HID_USAGE_X, dataOriginal*8)
@@ -62,55 +54,9 @@ class SerialControllerInterface:
             print(button)
             self.j.set_button(self.mapping.button[head], button)
 
-        # if dataHead == b'A':
-        #     head = dataHead.decode("utf-8") 
-        #     button = int.from_bytes(dataLSB, "big")
-        #     print(head)
-        #     print(button)
-        #     self.j.set_button(self.mapping.button[head], button)
-
-
         self.incoming = self.ser.read()
 
         return True
-
-        # data = self.ser.read()
-        dict = SerialControllerInterface.Convert(data_lista)
-        # print(dict)
-        if dict[b'A'] == b'1':
-            logging.info("Sending press")
-            self.j.set_button(self.mapping.button['A'], 1)
-        elif dict[b'A'] == b'0':
-            self.j.set_button(self.mapping.button['A'], 0)
-        if dict[b'B'] == b'1':
-            logging.info("Sending press")
-            self.j.set_button(self.mapping.button2['B'], 1)
-        elif dict[b'B'] == b'0':
-            self.j.set_button(self.mapping.button2['B'], 0)
-        if dict[b'R'] == b'1':
-            logging.info("Sending press")
-            self.j.set_button(self.mapping.button3['R'], 1)
-        elif dict[b'R'] == b'0':
-            self.j.set_button(self.mapping.button3['R'], 0)
-        if dict[b'L'] == b'1':
-            logging.info("Sending prCCCess")
-            self.j.set_button(self.mapping.button4['L'], 1)
-        elif dict[b'L'] == b'0':
-            self.j.set_button(self.mapping.button4['L'], 0)
-        
-        if dict[b'U'] == b'1':
-            logging.info("Sending press")
-            self.j.set_button(self.mapping.button5['U'], 1)
-        elif dict[b'U'] == b'0':
-            self.j.set_button(self.mapping.button5['U'], 0)
-        if dict[b'D'] == b'1':
-            logging.info("Sending press")
-            self.j.set_button(self.mapping.button6['D'], 1)
-        elif dict[b'D'] == b'0':
-            self.j.set_button(self.mapping.button6['D'], 0)
-
-
-        self.incoming = self.ser.read()
 
 
 class DummyControllerInterface:

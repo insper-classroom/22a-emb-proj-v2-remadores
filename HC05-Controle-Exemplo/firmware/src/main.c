@@ -1,88 +1,67 @@
-/************************************************************************
-* 5 semestre - Eng. da Computao - Insper
-*
-* 2021 - Exemplo com HC05 com RTOS
-*
-*/
+
+//----------------------------------- INCLUDES ----------------------------------------
 
 #include <asf.h>
 #include "conf_board.h"
 #include <string.h>
 
-/************************************************************************/
-/* defines                                                              */
-/************************************************************************/
 
-// LEDs
-#define LED_PIO      PIOC
-#define LED_PIO_ID   ID_PIOC
-#define LED_IDX      8
-#define LED_IDX_MASK (1 << LED_IDX)
+//----------------------------------- DEFINES ----------------------------------------
 
-//// Botão
-//#define BUT_PIO      PIOA
-//#define BUT_PIO_ID   ID_PIOA
-//#define BUT_IDX      11
-//#define BUT_IDX_MASK (1 << BUT_IDX)
+#define LED_PIO						PIOC
+#define LED_PIO_ID					ID_PIOC
+#define LED_IDX						8
+#define LED_IDX_MASK				(1 << LED_IDX)
 
-#define BUT_PIO      PIOD
-#define BUT_PIO_ID   ID_PIOD
-#define BUT_IDX      30
-#define BUT_IDX_MASK (1 << BUT_IDX)
+#define BUT_PIO						PIOD
+#define BUT_PIO_ID					ID_PIOD
+#define BUT_IDX						30
+#define BUT_IDX_MASK				(1 << BUT_IDX)
 
-#define BUT1_PIO      PIOA
-#define BUT1_PIO_ID   ID_PIOA
-#define BUT1_IDX      6
-#define BUT1_IDX_MASK (1 << BUT1_IDX)
+#define BUT1_PIO					PIOA
+#define BUT1_PIO_ID					ID_PIOA
+#define BUT1_IDX					6
+#define BUT1_IDX_MASK				(1 << BUT1_IDX)
 
-// mexer no X
-#define AFEC_VRX AFEC1
-#define AFEC_VRX_ID ID_AFEC1
-#define AFEC_VRX_CHANNEL 5 // Canal do pino PC30
+// AFEC para o Eixo X do Analógico
+#define AFEC_VRX					AFEC1
+#define AFEC_VRX_ID					ID_AFEC1
+#define AFEC_VRX_CHANNEL			5 // Canal do pino PC30
 
-// mexer no Y
-#define AFEC_VRY AFEC0
-#define AFEC_VRY_ID ID_AFEC0
-#define AFEC_VRY_CHANNEL 5 // Canal do pino PB2
-
-
-// usart (bluetooth ou serial)
-// Descomente para enviar dados
-// pela serial debug
+// AFEC para o Eixo Y do Analógico
+#define AFEC_VRY					AFEC0
+#define AFEC_VRY_ID					ID_AFEC0
+#define AFEC_VRY_CHANNEL			5 // Canal do pino PB2
 
 //#define DEBUG_SERIAL
 
 #ifdef DEBUG_SERIAL
-#define USART_COM USART1
-#define USART_COM_ID ID_USART1
+#define USART_COM					USART1
+#define USART_COM_ID				ID_USART1
 #else
-#define USART_COM USART0
-#define USART_COM_ID ID_USART0
+#define USART_COM					USART0
+#define USART_COM_ID				ID_USART0
 #endif
 
-/************************************************************************/
-/* RTOS                                                                 */
-/************************************************************************/
+//----------------------------------- DEFINES RTOS ----------------------------------------
 
-#define TASK_BLUETOOTH_STACK_SIZE            (4096/sizeof(portSTACK_TYPE))
-#define TASK_BLUETOOTH_STACK_PRIORITY        (tskIDLE_PRIORITY)
+#define TASK_BLUETOOTH_STACK_SIZE				(4096/sizeof(portSTACK_TYPE))
+#define TASK_BLUETOOTH_STACK_PRIORITY			(tskIDLE_PRIORITY)
 
-#define TASK_ADC_STACK_SIZE (1024*10 / sizeof(portSTACK_TYPE))
-#define TASK_ADC_STACK_PRIORITY (tskIDLE_PRIORITY)
+#define TASK_ADC_STACK_SIZE						(1024*10 / sizeof(portSTACK_TYPE))
+#define TASK_ADC_STACK_PRIORITY					(tskIDLE_PRIORITY)
 
-#define TASK_PROC_STACK_SIZE (1024*10 / sizeof(portSTACK_TYPE))
-#define TASK_PROC_STACK_PRIORITY (tskIDLE_PRIORITY)
+#define TASK_PROC_STACK_SIZE					(1024*10 / sizeof(portSTACK_TYPE))
+#define TASK_PROC_STACK_PRIORITY				(tskIDLE_PRIORITY)
 
-#define TASK_ADC2_STACK_SIZE (1024*10 / sizeof(portSTACK_TYPE))
-#define TASK_ADC2_STACK_PRIORITY (tskIDLE_PRIORITY)
+#define TASK_ADC2_STACK_SIZE					(1024*10 / sizeof(portSTACK_TYPE))
+#define TASK_ADC2_STACK_PRIORITY				(tskIDLE_PRIORITY)
 
-#define TASK_PROC2_STACK_SIZE (1024*10 / sizeof(portSTACK_TYPE))
-#define TASK_PROC2_STACK_PRIORITY (tskIDLE_PRIORITY)
+#define TASK_PROC2_STACK_SIZE					(1024*10 / sizeof(portSTACK_TYPE))
+#define TASK_PROC2_STACK_PRIORITY				(tskIDLE_PRIORITY)
 
 
-/************************************************************************/
-/* prototypes                                                           */
-/************************************************************************/
+//----------------------------------- PROTOTYPES ----------------------------------------
 
 extern void vApplicationStackOverflowHook(xTaskHandle *pxTask,
 signed char *pcTaskName);
@@ -91,17 +70,7 @@ extern void vApplicationTickHook(void);
 extern void vApplicationMallocFailedHook(void);
 extern void xPortSysTickHandler(void);
 
-/************************************************************************/
-/* constants                                                            */
-/************************************************************************/
-
-/************************************************************************/
-/* variaveis globais                                                    */
-/************************************************************************/
-
-/************************************************************************/
-/* RTOS application HOOK                                                */
-/************************************************************************/
+//----------------------------------- STRUCTS ----------------------------------------
 
 typedef struct {
 	uint value;
@@ -110,11 +79,10 @@ typedef struct {
 typedef struct {
 	char head;
 	char value;
-	
 } adcDataBut;
 
+//----------------------------------- RTOS ----------------------------------------
 
-/** Queue for msg log send data */
 QueueHandle_t xQueuexX1;
 QueueHandle_t xQueueY1;
 QueueHandle_t xQueueBut;
@@ -150,28 +118,8 @@ extern void vApplicationMallocFailedHook(void) {
 	configASSERT( ( volatile void * ) NULL );
 }
 
-/************************************************************************/
-/* handlers / callbacks                                                 */
-/************************************************************************/
 
-/************************************************************************/
-/* funcoes                                                              */
-/************************************************************************/
-
-
-void configure_pio_input(Pio *pio, const pio_type_t ul_type, const uint32_t ul_mask, const uint32_t ul_attribute, uint32_t ul_id){
-	pmc_enable_periph_clk(ul_id);
-	pio_configure(pio, ul_type, ul_mask, ul_attribute);
-	pio_set_debounce_filter(pio, ul_mask, 60);
-}
-
-void configure_interruption(Pio *pio, uint32_t ul_id, const uint32_t ul_mask,  uint32_t ul_attr, void (*p_handler) (uint32_t, uint32_t), uint32_t priority){
-	pio_handler_set(pio, ul_id, ul_mask , ul_attr, p_handler);
-	pio_enable_interrupt(pio, ul_mask);
-	pio_get_interrupt_status(pio);
-	NVIC_EnableIRQ(ul_id);
-	NVIC_SetPriority(ul_id, priority);
-}
+//----------------------------------- CALLBACKS ----------------------------------------
 
 void but_amarelo_callback(){
 	adcDataBut but_amarelo_data;
@@ -182,7 +130,7 @@ void but_amarelo_callback(){
 	
 	if(pio_get(BUT_PIO, PIO_INPUT, BUT_IDX_MASK) == 0) {
 		but_amarelo = 1;
-	} else {
+		} else {
 		but_amarelo = 0;
 	}
 	
@@ -201,7 +149,7 @@ void but_verde_callback(){
 	
 	if (pio_get(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK) == 0){
 		but_verde = 1;
-	} else{
+		} else{
 		but_verde = 0;
 	}
 	
@@ -211,6 +159,36 @@ void but_verde_callback(){
 	xQueueSendFromISR(xQueueBut, &but_verde_data, xHigherPriorityTaskWoken);
 }
 
+static void AFEC_vrx_Callback(void) {
+	adcData adc;
+	adc.value = afec_channel_get_value(AFEC_VRX, AFEC_VRX_CHANNEL);
+	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	xQueueSendFromISR(xQueuexX1, &adc, &xHigherPriorityTaskWoken);
+}
+
+static void AFEC_vry_Callback(void) {
+	adcData adc;
+	adc.value = afec_channel_get_value(AFEC_VRY, AFEC_VRY_CHANNEL);
+	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+	xQueueSendFromISR(xQueueY1, &adc, &xHigherPriorityTaskWoken);
+}
+
+
+//----------------------------------- CONFIGURES E INITS ----------------------------------------
+
+void configure_pio_input(Pio *pio, const pio_type_t ul_type, const uint32_t ul_mask, const uint32_t ul_attribute, uint32_t ul_id){
+	pmc_enable_periph_clk(ul_id);
+	pio_configure(pio, ul_type, ul_mask, ul_attribute);
+	pio_set_debounce_filter(pio, ul_mask, 60);
+}
+
+void configure_interruption(Pio *pio, uint32_t ul_id, const uint32_t ul_mask,  uint32_t ul_attr, void (*p_handler) (uint32_t, uint32_t), uint32_t priority){
+	pio_handler_set(pio, ul_id, ul_mask , ul_attr, p_handler);
+	pio_enable_interrupt(pio, ul_mask);
+	pio_get_interrupt_status(pio);
+	NVIC_EnableIRQ(ul_id);
+	NVIC_SetPriority(ul_id, priority);
+}
 
 void io_init(void) {
 
@@ -321,22 +299,6 @@ int hc05_init(void) {
 	vTaskDelay( 500 / portTICK_PERIOD_MS);
 }
 
-
-static void AFEC_vrx_Callback(void) {
-	adcData adc;
-	adc.value = afec_channel_get_value(AFEC_VRX, AFEC_VRX_CHANNEL);
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
-	xQueueSendFromISR(xQueuexX1, &adc, &xHigherPriorityTaskWoken);
-}
-
-static void AFEC_vry_Callback(void) {
-	adcData adc;
-	adc.value = afec_channel_get_value(AFEC_VRY, AFEC_VRY_CHANNEL);
-	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
-	xQueueSendFromISR(xQueueY1, &adc, &xHigherPriorityTaskWoken);
-}
-
-
 void TC1_Handler(void) {
 	volatile uint32_t ul_dummy;
 
@@ -421,9 +383,7 @@ void TC_init(Tc *TC, int ID_TC, int TC_CHANNEL, int freq) {
 
 
 
-/************************************************************************/
-/* TASKS                                                                */
-/************************************************************************/
+//----------------------------------- TASKS ----------------------------------------
 
 static void task_proc(void *pvParameters){
 	config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
@@ -431,7 +391,6 @@ static void task_proc(void *pvParameters){
 	TC_init(TC0, ID_TC1, 1, 10);
 	tc_start(TC0, 1);
 	
-	// corsi
 	adcData adc;
 
 	while (1) {
@@ -452,7 +411,6 @@ static void task_proc2(void *pvParameters){
 	
 	adcData adc;
 
-	
 	while (1) {
 		if (xQueueReceive(xQueueY1, &(adc), 1000)) {
 			//printf("ADC Y: %d \n", adc);
@@ -462,7 +420,7 @@ static void task_proc2(void *pvParameters){
 	}
 }
 
-void send_data_uart(adcData adc_data, char head, char eof){
+void send_data_analog_uart(adcData adc_data, char head, char eof){
 	usart_write(USART_COM, head);
 	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
 	
@@ -499,10 +457,9 @@ void task_bluetooth(void) {
 	printf("Task Bluetooth started \n");
 	
 	printf("Inicializando HC05 \n");
+	
 	config_usart0();
 	hc05_init();
-
-	// configura LEDs e Botões
 	io_init();
 
 	char eof = 'X';
@@ -513,14 +470,12 @@ void task_bluetooth(void) {
 	adcData adcX1;
 	adcData adcY1;
 
-
-	// Task não deve retornar.
 	while(1) {
 		if (xQueueReceive(xQueuexX1, &(adcX1), 1000)) {
-			send_data_uart(adcX1, head_x, eof);
+			send_data_analog_uart(adcX1, head_x, eof);
 		}
 		if (xQueueReceive(xQueueY1, &(adcY1), 1000)) {
-			send_data_uart(adcY1, head_y, eof);
+			send_data_analog_uart(adcY1, head_y, eof);
 		}
 		if (xQueueReceive(xQueueBut, &(but_data), 2)) {
 			send_data_but_uart(but_data.head, but_data.value, eof);
@@ -533,33 +488,27 @@ void task_bluetooth(void) {
 
 
 
-/************************************************************************/
-/* main                                                                 */
-/************************************************************************/
+//----------------------------------- MAIN ----------------------------------------
 
-  
 int main(void) {
-	/* Initialize the SAM system */
+
 	sysclk_init();
 	board_init();
-
 	configure_console();
 
-	/* Create task to make led blink */
 	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
 	
 	xQueuexX1 = xQueueCreate(100, sizeof(adcData));
 	if (xQueuexX1 == NULL)
-		printf("falha em criar a queue xQueuexX1");
+		printf("Falha em criar a queue xQueuexX1");
 		
 	xQueueY1 = xQueueCreate(100, sizeof(adcData));
 	if (xQueueY1 == NULL)
-	printf("falha em criar a queue xQueueY1 \n");
-	
+		printf("Falha em criar a queue xQueueY1 \n");
 			
 	xQueueBut = xQueueCreate(100, sizeof(adcData));
 	if (xQueueBut == NULL)
-	printf("falha em criar a queue xQueueBut \n");
+		printf("Falha em criar a queue xQueueBut \n");
 
 
 	if (xTaskCreate(task_proc, "proc", TASK_PROC_STACK_SIZE, NULL,
@@ -572,16 +521,10 @@ int main(void) {
  		printf("Failed to create test ADC task\r\n");
  	}
 	
-
-
-
-	/* Start the scheduler. */
 	vTaskStartScheduler();
-
 
 	while(1){
 	}
 
-	/* Will only get here if there was insufficient memory to create the idle task. */
 	return 0;
 }

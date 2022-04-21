@@ -9783,9 +9783,9 @@ LOAD c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin
                 0x00403500       0x58 src/main.o
  .text.task_proc
                 0x00403558       0x58 src/main.o
- .text.send_data_uart
+ .text.send_data_analog_uart
                 0x004035b0       0x90 src/main.o
-                0x004035b0                send_data_uart
+                0x004035b0                send_data_analog_uart
  .text.send_data_but_uart
                 0x00403640       0x9c src/main.o
                 0x00403640                send_data_but_uart
@@ -10557,7 +10557,7 @@ OUTPUT(RTOS-BLUETOOTH.elf elf32-littlearm)
  .comment       0x00000059       0x5a src/ASF/thirdparty/freertos/freertos-8.2.3/Source/timers.o
  .comment       0x00000059       0x5a src/main.o
 
-.debug_info     0x00000000    0x239cb
+.debug_info     0x00000000    0x239b4
  .debug_info    0x00000000     0x1267 src/ASF/common/services/clock/same70/sysclk.o
  .debug_info    0x00001267     0x10c5 src/ASF/common/services/serial/usart_serial.o
  .debug_info    0x0000232c      0xa8e src/ASF/common/services/sleepmgr/sam/sleepmgr.o
@@ -10581,9 +10581,9 @@ OUTPUT(RTOS-BLUETOOTH.elf elf32-littlearm)
  .debug_info    0x000181a0     0x26ec src/ASF/thirdparty/freertos/freertos-8.2.3/Source/queue.o
  .debug_info    0x0001a88c     0x34b4 src/ASF/thirdparty/freertos/freertos-8.2.3/Source/tasks.o
  .debug_info    0x0001dd40     0x1b3e src/ASF/thirdparty/freertos/freertos-8.2.3/Source/timers.o
- .debug_info    0x0001f87e     0x414d src/main.o
+ .debug_info    0x0001f87e     0x4136 src/main.o
 
-.debug_abbrev   0x00000000     0x4865
+.debug_abbrev   0x00000000     0x4899
  .debug_abbrev  0x00000000      0x31f src/ASF/common/services/clock/same70/sysclk.o
  .debug_abbrev  0x0000031f      0x2a4 src/ASF/common/services/serial/usart_serial.o
  .debug_abbrev  0x000005c3      0x1b2 src/ASF/common/services/sleepmgr/sam/sleepmgr.o
@@ -10607,7 +10607,7 @@ OUTPUT(RTOS-BLUETOOTH.elf elf32-littlearm)
  .debug_abbrev  0x0000373d      0x399 src/ASF/thirdparty/freertos/freertos-8.2.3/Source/queue.o
  .debug_abbrev  0x00003ad6      0x48d src/ASF/thirdparty/freertos/freertos-8.2.3/Source/tasks.o
  .debug_abbrev  0x00003f63      0x3ce src/ASF/thirdparty/freertos/freertos-8.2.3/Source/timers.o
- .debug_abbrev  0x00004331      0x534 src/main.o
+ .debug_abbrev  0x00004331      0x568 src/main.o
 
 .debug_loc      0x00000000     0xa6dd
  .debug_loc     0x00000000      0x183 src/ASF/common/services/clock/same70/sysclk.o
@@ -10917,7 +10917,7 @@ OUTPUT(RTOS-BLUETOOTH.elf elf32-littlearm)
  .debug_macro   0x00023158       0x16 src/main.o
  .debug_macro   0x0002316e       0x1c src/main.o
 
-.debug_line     0x00000000    0x12fdc
+.debug_line     0x00000000    0x12fde
  .debug_line    0x00000000      0xb4f src/ASF/common/services/clock/same70/sysclk.o
  .debug_line    0x00000b4f      0xc34 src/ASF/common/services/serial/usart_serial.o
  .debug_line    0x00001783      0xa4f src/ASF/common/services/sleepmgr/sam/sleepmgr.o
@@ -10941,9 +10941,9 @@ OUTPUT(RTOS-BLUETOOTH.elf elf32-littlearm)
  .debug_line    0x0000e686     0x11ea src/ASF/thirdparty/freertos/freertos-8.2.3/Source/queue.o
  .debug_line    0x0000f870     0x156e src/ASF/thirdparty/freertos/freertos-8.2.3/Source/tasks.o
  .debug_line    0x00010dde      0xdaf src/ASF/thirdparty/freertos/freertos-8.2.3/Source/timers.o
- .debug_line    0x00011b8d     0x144f src/main.o
+ .debug_line    0x00011b8d     0x1451 src/main.o
 
-.debug_str      0x00000000    0x94d86
+.debug_str      0x00000000    0x94d4e
  .debug_str     0x00000000    0x85ef1 src/ASF/common/services/clock/same70/sysclk.o
                               0x865c6 (size before relaxing)
  .debug_str     0x00085ef1      0x576 src/ASF/common/services/serial/usart_serial.o
@@ -10990,8 +10990,8 @@ OUTPUT(RTOS-BLUETOOTH.elf elf32-littlearm)
                               0x8ac8f (size before relaxing)
  .debug_str     0x00091fe2      0x483 src/ASF/thirdparty/freertos/freertos-8.2.3/Source/timers.o
                               0x8a716 (size before relaxing)
- .debug_str     0x00092465     0x2921 src/main.o
-                              0x8f307 (size before relaxing)
+ .debug_str     0x00092465     0x28e9 src/main.o
+                              0x8f2cf (size before relaxing)
 
 .debug_frame    0x00000000     0x3a64
  .debug_frame   0x00000000       0x88 src/ASF/common/services/clock/same70/sysclk.o
@@ -11846,8 +11846,8 @@ pxCurrentTCB                                      src/ASF/thirdparty/freertos/fr
                                                   src/ASF/thirdparty/freertos/freertos-8.2.3/Source/portable/GCC/ARM_CM7/r0p1/port.o
 pxPortInitialiseStack                             src/ASF/thirdparty/freertos/freertos-8.2.3/Source/portable/GCC/ARM_CM7/r0p1/port.o
                                                   src/ASF/thirdparty/freertos/freertos-8.2.3/Source/tasks.o
+send_data_analog_uart                             src/main.o
 send_data_but_uart                                src/main.o
-send_data_uart                                    src/main.o
 setbuf                                            c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m\libc.a(lib_a-setbuf.o)
                                                   src/main.o
 setlocale                                         c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/6.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m\libc.a(lib_a-locale.o)
