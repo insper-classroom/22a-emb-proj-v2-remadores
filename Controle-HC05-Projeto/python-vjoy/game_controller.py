@@ -37,7 +37,7 @@ class SerialControllerInterface:
         # print ("BUT: least", dataLSB)
         # print ("BUT: most", dataMSB)
         # print ("BUT: head", dataHead)
-        # print(dataOriginal)
+        print(dataOriginal)
         
         if dataHead == b'h':
             self.j.set_axis(pyvjoy.HID_USAGE_X, dataOriginal*8)

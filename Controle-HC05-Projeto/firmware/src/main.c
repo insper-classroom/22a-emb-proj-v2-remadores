@@ -272,6 +272,8 @@ void io_init(void) {
 	pmc_enable_periph_clk(LED_PIO_ID);
 	pmc_enable_periph_clk(BUT_PIO_ID);
 	pmc_enable_periph_clk(BUT1_PIO_ID);
+	pmc_enable_periph_clk(BUT2_PIO_ID);
+	pmc_enable_periph_clk(BUT3_PIO_ID);
 
 
 	// Configura Pinos
@@ -395,6 +397,12 @@ void TC1_Handler(void) {
 	
 	afec_channel_enable(AFEC_VRY, AFEC_VRY_CHANNEL);
 	afec_start_software_conversion(AFEC_VRY);
+	
+	afec_channel_enable(AFEC_VRX2, AFEC_VRX2_CHANNEL);
+	afec_start_software_conversion(AFEC_VRX2);
+		
+	afec_channel_enable(AFEC_VRY2, AFEC_VRY2_CHANNEL);
+	afec_start_software_conversion(AFEC_VRY2);
 
 }
 
@@ -594,18 +602,18 @@ void task_bluetooth(void) {
 	adcData adcY2;
 	
 	while(1) {
-		//if (xQueueReceive(xQueueX1, &(adcX1), 100)) {
-			//send_data_analog_uart(adcX1, head_x, eof);
-		//}
-		//if (xQueueReceive(xQueueY1, &(adcY1), 100)) {
-			//send_data_analog_uart(adcY1, head_y, eof);
-		//}
-		//if (xQueueReceive(xQueueX2, &(adcX2), 1000)) {
-			//send_data_analog_uart(adcX2, head_x2, eof);
-		//}
-		//if (xQueueReceive(xQueueY2, &(adcY2), 1000)) {
-			//send_data_analog_uart(adcY2, head_y2, eof);
-		//}
+		if (xQueueReceive(xQueueX1, &(adcX1), 100)) {
+			send_data_analog_uart(adcX1, head_x, eof);
+		}
+		if (xQueueReceive(xQueueY1, &(adcY1), 100)) {
+			send_data_analog_uart(adcY1, head_y, eof);
+		}
+		if (xQueueReceive(xQueueX2, &(adcX2), 1000)) {
+			send_data_analog_uart(adcX2, head_x2, eof);
+		}
+		if (xQueueReceive(xQueueY2, &(adcY2), 1000)) {
+			send_data_analog_uart(adcY2, head_y2, eof);
+		}
 		if (xQueueReceive(xQueueBut, &(but_data), 2)) {
 			send_data_but_uart(but_data.head, but_data.value, eof);
 		}
