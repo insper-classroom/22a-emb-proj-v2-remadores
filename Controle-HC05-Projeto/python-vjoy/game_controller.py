@@ -6,7 +6,7 @@ import pyvjoy # Windows apenas
 
 class MyControllerMap:
     def __init__(self):
-        self.button = {'A': 1, 'B': 2}
+        self.button = {'A': 1, 'B': 2, 'C': 3, 'D': 4}
 
 class SerialControllerInterface:
 
@@ -37,7 +37,7 @@ class SerialControllerInterface:
         # print ("BUT: least", dataLSB)
         # print ("BUT: most", dataMSB)
         # print ("BUT: head", dataHead)
-        # print(dataOriginal)
+        print(dataOriginal)
         
         if dataHead == b'h':
             self.j.set_axis(pyvjoy.HID_USAGE_X, dataOriginal*8)
@@ -46,6 +46,12 @@ class SerialControllerInterface:
         elif dataHead == b'y':
             self.j.set_axis(pyvjoy.HID_USAGE_Y, dataOriginal*8)
             # print(int.from_bytes(dataMSB + dataLSB, "big"))
+        
+        elif dataHead == b'i':
+            self.j.set_axis(pyvjoy.HID_USAGE_RX, dataOriginal*8)
+
+        elif dataHead == b'z':
+            self.j.set_axis(pyvjoy.HID_USAGE_RY, dataOriginal*8)
         
         else:
             head = dataHead.decode("utf-8") 
