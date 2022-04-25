@@ -15,23 +15,23 @@
 
 #define BUT_PIO						PIOD
 #define BUT_PIO_ID					ID_PIOD
-#define BUT_IDX						30
+#define BUT_IDX						20
 #define BUT_IDX_MASK				(1 << BUT_IDX)
 
-#define BUT1_PIO					PIOA
-#define BUT1_PIO_ID					ID_PIOA
-#define BUT1_IDX					6
+#define BUT1_PIO					PIOD
+#define BUT1_PIO_ID					ID_PIOD
+#define BUT1_IDX					21
 #define BUT1_IDX_MASK				(1 << BUT1_IDX)
 
-#define BUT2_PIO					PIOA
-#define BUT2_PIO_ID					ID_PIOA
-#define BUT2_IDX					3
-#define BUT2_IDX_MASK				(1 << BUT2_IDX) 
+#define BUT2_PIO					PIOD
+#define BUT2_PIO_ID					ID_PIOD
+#define BUT2_IDX					22
+#define BUT2_IDX_MASK				(1 << BUT2_IDX)
 
-#define BUT3_PIO					PIOA
-#define BUT3_PIO_ID					ID_PIOA
-#define BUT3_IDX					4
-#define BUT3_IDX_MASK				(1 << BUT3_IDX)
+#define BUT3_PIO					PIOD
+#define BUT3_PIO_ID					ID_PIOD
+#define BUT3_IDX					25
+#define BUT3_IDX_MASK				(1 << BUT3_IDX) 
 
 //AFEC para o Eixo X do Analógico da esquerda
 #define AFEC_VRX					AFEC1
@@ -65,7 +65,7 @@
 
 //----------------------------------- DEFINES RTOS ----------------------------------------
 
-#define TASK_BLUETOOTH_STACK_SIZE				(4096/sizeof(portSTACK_TYPE))
+#define TASK_BLUETOOTH_STACK_SIZE				(4096*10 / sizeof(portSTACK_TYPE))
 #define TASK_BLUETOOTH_STACK_PRIORITY			(tskIDLE_PRIORITY)
 
 // tasks do analógico esquerdo
@@ -103,10 +103,9 @@ typedef struct {
 
 //----------------------------------- RTOS ----------------------------------------
 
+QueueHandle_t xQueueBut;
 QueueHandle_t xQueueX1;
 QueueHandle_t xQueueY1;
-QueueHandle_t xQueueBut;
-
 QueueHandle_t xQueueX2;
 QueueHandle_t xQueueY2;
 
@@ -275,7 +274,6 @@ void io_init(void) {
 	pmc_enable_periph_clk(BUT2_PIO_ID);
 	pmc_enable_periph_clk(BUT3_PIO_ID);
 
-
 	// Configura Pinos
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 
@@ -407,7 +405,6 @@ void TC1_Handler(void) {
 }
 
 
-
 static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel,
                             afec_callback_t callback) {
   /*************************************
@@ -454,7 +451,6 @@ static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel,
 }
 
 
-
 void TC_init(Tc *TC, int ID_TC, int TC_CHANNEL, int freq) {
 	uint32_t ul_div;
 	uint32_t ul_tcclks;
@@ -471,81 +467,7 @@ void TC_init(Tc *TC, int ID_TC, int TC_CHANNEL, int freq) {
 	tc_enable_interrupt(TC, TC_CHANNEL, TC_IER_CPCS);
 }
 
-
-
 //----------------------------------- TASKS ----------------------------------------
-
-static void task_proc(void *pvParameters){
-	config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
-
-	TC_init(TC0, ID_TC1, 1, 10);
-	tc_start(TC0, 1);
-	
-	adcData adc;
-
-	while (1) {
-		if (xQueueReceive(xQueueX1, &(adc), 1000)) {
-			//printf("ADC X: %d \n", adc);
-			} else {
-			//printf("Nao chegou um novo dado em 1 segundo");
-		}
-	}
-
-}
-
-static void task_proc2(void *pvParameters){
-	config_AFEC_pot(AFEC_VRY, AFEC_VRY_ID, AFEC_VRY_CHANNEL, AFEC_vry_Callback);
-
-	TC_init(TC0, ID_TC1, 1, 10);
-	tc_start(TC0, 1);
-	
-	adcData adc;
-
-	while (1) {
-		if (xQueueReceive(xQueueY1, &(adc), 1000)) {
-			//printf("ADC Y: %d \n", adc);
-			} else {
-			//printf("Nao chegou um novo dado em 1 segundo");
-		}
-	}
-}
-
-
-static void task_proc3(void *pvParameters){
-	config_AFEC_pot(AFEC_VRX2, AFEC_VRX2_ID, AFEC_VRX2_CHANNEL, AFEC_rx_Callback);
-
-	TC_init(TC0, ID_TC1, 1, 10);
-	tc_start(TC0, 1);
-	
-	adcData adc;
-
-	while (1) {
-		if (xQueueReceive(xQueueX2, &(adc), 1000)) {
-			//printf("ADC X: %d \n", adc);
-			} else {
-			//printf("Nao chegou um novo dado em 1 segundo");
-		}
-	}
-
-}
-
-static void task_proc4(void *pvParameters){
-	config_AFEC_pot(AFEC_VRY2, AFEC_VRY2_ID, AFEC_VRY2_CHANNEL, AFEC_ry_Callback);
-
-	TC_init(TC0, ID_TC1, 1, 10);
-	tc_start(TC0, 1);
-	
-	adcData adc;
-
-	while (1) {
-		if (xQueueReceive(xQueueY2, &(adc), 1000)) {
-			//printf("ADC Y: %d \n", adc);
-			} else {
-			//printf("Nao chegou um novo dado em 1 segundo");
-		}
-	}
-}
-
 
 void send_data_analog_uart(adcData adc_data, char head, char eof){
 	usart_write(USART_COM, head);
@@ -579,14 +501,21 @@ void send_data_but_uart(char adc_head, char but_flag, char eof){
 	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
 }
 
-
 void task_bluetooth(void) {
 	printf("Task Bluetooth started \n");
 	
 	printf("Inicializando HC05 \n");
 	
+	TC_init(TC0, ID_TC1, 1, 10);
+	tc_start(TC0, 1);
+	
+	config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
+	config_AFEC_pot(AFEC_VRY, AFEC_VRY_ID, AFEC_VRY_CHANNEL, AFEC_vry_Callback);
+	config_AFEC_pot(AFEC_VRX2, AFEC_VRX2_ID, AFEC_VRX2_CHANNEL, AFEC_rx_Callback);
+	config_AFEC_pot(AFEC_VRY2, AFEC_VRY2_ID, AFEC_VRY2_CHANNEL, AFEC_ry_Callback);
+	
 	config_usart0();
-	hc05_init();
+	//hc05_init();
 	io_init();
 
 	char eof = 'X';
@@ -623,8 +552,6 @@ void task_bluetooth(void) {
 	//vTaskDelay(10 / portTICK_PERIOD_MS);
 }
 
-
-
 //----------------------------------- MAIN ----------------------------------------
 
 int main(void) {
@@ -632,8 +559,6 @@ int main(void) {
 	sysclk_init();
 	board_init();
 	configure_console();
-
-	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
 	
 	xQueueX1 = xQueueCreate(100, sizeof(adcData));
 	if (xQueueX1 == NULL)
@@ -655,27 +580,8 @@ int main(void) {
 	if (xQueueBut == NULL)
 		printf("Falha em criar a queue xQueueBut \n");
 
+	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
 
-	if (xTaskCreate(task_proc, "proc", TASK_PROC_STACK_SIZE, NULL,
-	TASK_PROC_STACK_PRIORITY, NULL) != pdPASS) {
-		printf("Failed to create test ADC task\r\n");
-	}
- 	
- 	if (xTaskCreate(task_proc2, "proc2", TASK_PROC2_STACK_SIZE, NULL,
- 	TASK_PROC2_STACK_PRIORITY, NULL) != pdPASS) {
- 		printf("Failed to create test ADC task\r\n");
- 	}
-	
-	if (xTaskCreate(task_proc3, "proc3", TASK_PROC3_STACK_SIZE, NULL,
-	TASK_PROC3_STACK_PRIORITY, NULL) != pdPASS) {
-		printf("Failed to create test ADC task proc3\r\n");
-	}
-
-	if (xTaskCreate(task_proc4, "proc4", TASK_PROC4_STACK_SIZE, NULL,
-	TASK_PROC4_STACK_PRIORITY, NULL) != pdPASS) {
-		printf("Failed to create test ADC task proc4\r\n");
-	}
-	
 	vTaskStartScheduler();
 
 	while(1){
