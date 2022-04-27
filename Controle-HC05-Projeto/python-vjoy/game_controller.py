@@ -63,22 +63,8 @@ class SerialControllerInterface:
 
         return True
 
-
-class DummyControllerInterface:
-    def __init__(self):
-        self.mapping = MyControllerMap()
-        self.j = pyvjoy.VJoyDevice(1)
-
-    def update(self):
-        self.j.set_button(self.mapping.button['A'], 1)
-        time.sleep(0.1)
-        self.j.set_button(self.mapping.button['A'], 0)
-        logging.info("[Dummy] Pressed A button")
-        time.sleep(1)
-
-
 if __name__ == '__main__':
-    interfaces = ['dummy', 'serial']
+    interfaces = 'serial'
     argparse = argparse.ArgumentParser()
     argparse.add_argument('serial_port', type=str)
     argparse.add_argument('-b', '--baudrate', type=int, default=9600)
@@ -89,10 +75,8 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
 
     print("Connection to {} using {} interface ({})".format(args.serial_port, args.controller_interface, args.baudrate))
-    if args.controller_interface == 'dummy':
-        controller = DummyControllerInterface()
-    else:
-        controller = SerialControllerInterface(port=args.serial_port, baudrate=args.baudrate)
+
+    controller = SerialControllerInterface(port=args.serial_port, baudrate=args.baudrate)
 
     while True:
         controller.update()

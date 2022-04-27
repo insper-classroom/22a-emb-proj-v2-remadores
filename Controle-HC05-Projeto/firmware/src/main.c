@@ -5,7 +5,6 @@
 #include "conf_board.h"
 #include <string.h>
 
-
 //----------------------------------- DEFINES ----------------------------------------
 
 #define LED_PIO						PIOC
@@ -114,10 +113,6 @@ typedef struct {
 
 QueueHandle_t xQueueBut;
 QueueHandle_t xQueueADC;
-//QueueHandle_t xQueueY1;
-//QueueHandle_t xQueueX2;
-//QueueHandle_t xQueueY2;
-
 
 /* Called if stack overflow during execution */
 extern void vApplicationStackOverflowHook(xTaskHandle *pxTask,
@@ -428,7 +423,7 @@ void TC1_Handler(void) {
 
 	/* Avoid compiler warning */
 	UNUSED(ul_dummy);
-
+	
 	/* Selecina canal e inicializa conversão */
  	afec_channel_enable(AFEC_VRX, AFEC_VRX_CHANNEL);
  	afec_start_software_conversion(AFEC_VRX);
@@ -436,23 +431,16 @@ void TC1_Handler(void) {
 	afec_channel_enable(AFEC_VRY, AFEC_VRY_CHANNEL);
 	afec_start_software_conversion(AFEC_VRY);
 	
- 	afec_channel_enable(AFEC_VRX2, AFEC_VRX2_CHANNEL);
- 	afec_start_software_conversion(AFEC_VRX2);
- 		
- 	afec_channel_enable(AFEC_VRY2, AFEC_VRY2_CHANNEL);
- 	afec_start_software_conversion(AFEC_VRY2);
+	afec_channel_enable(AFEC_VRX2, AFEC_VRX2_CHANNEL);
+	afec_start_software_conversion(AFEC_VRX2);
+	
+	afec_channel_enable(AFEC_VRY2, AFEC_VRY2_CHANNEL);
+	afec_start_software_conversion(AFEC_VRY2);
 
 }
 
+static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel, afec_callback_t callback) {
 
-static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel,
-                            afec_callback_t callback) {
-  /*************************************
-   * Ativa e configura AFEC
-   *************************************/
-  /* Ativa AFEC - 0 */
-
-  /* struct de configuracao do AFEC */
   struct afec_config afec_cfg;
 
   /* Carrega parametros padrao */
@@ -540,50 +528,16 @@ void send_data_but_uart(char adc_head, char but_flag, char eof){
 	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
 }
 
-
-//void task_afec(void) {
-	//
-	//afec_enable(AFEC1);
-	//afec_enable(AFEC0);
-	//TC_init(TC0, ID_TC1, 1, 10);
-	//tc_start(TC0, 1);
-//
-	//while(1) {
-		//
-		///* Selecina canal e inicializa conversão */
-		//config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
-		//afec_channel_enable(AFEC_VRX, AFEC_VRX_CHANNEL);
-	 	//afec_start_software_conversion(AFEC_VRX);
-		//vTaskDelay(10);
-		 //
-	 	//config_AFEC_pot(AFEC_VRY, AFEC_VRY_ID, AFEC_VRY_CHANNEL, AFEC_vry_Callback);
-		//afec_channel_enable(AFEC_VRY, AFEC_VRY_CHANNEL);
-		//afec_start_software_conversion(AFEC_VRY);
-			 //vTaskDelay(10);
-//
-	//
-	  	//config_AFEC_pot(AFEC_VRX2, AFEC_VRX2_ID, AFEC_VRX2_CHANNEL, AFEC_rx_Callback);
-				//afec_channel_enable(AFEC_VRX2, AFEC_VRX2_CHANNEL);
-	 	//afec_start_software_conversion(AFEC_VRX2);  
-		  		 //vTaskDelay(10);
-//
-		//config_AFEC_pot(AFEC_VRY2, AFEC_VRY2_ID, AFEC_VRY2_CHANNEL, AFEC_ry_Callback);
-	 	//afec_channel_enable(AFEC_VRY2, AFEC_VRY2_CHANNEL);
-	 	//afec_start_software_conversion(AFEC_VRY2);
-		 //vTaskDelay(10);
-//
-	//}
-//}
-
 void task_bluetooth(void) {
 	printf("Task Bluetooth started \n");
 	
 	printf("Inicializando HC05 \n");
 	
-	afec_enable(AFEC0);
-	afec_enable(AFEC1);
 	TC_init(TC0, ID_TC1, 1, 2);
 	tc_start(TC0, 1);
+	
+	afec_enable(AFEC0);
+	afec_enable(AFEC1);
 	
 	config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
 	config_AFEC_pot(AFEC_VRY, AFEC_VRY_ID, AFEC_VRY_CHANNEL, AFEC_vry_Callback);
@@ -595,34 +549,22 @@ void task_bluetooth(void) {
 	io_init();
 
 	char eof = 'X';
-
 		
 	adcDataBut but_data;
 	adcData adcDados;
-	//adcData adcY1;
-	//adcData adcX2;
-	//adcData adcY2;
 	
 	while(1) {
+		
 		if (xQueueReceive(xQueueADC, &(adcDados), 5)) {
 			send_data_analog_uart(adcDados, adcDados.head, eof);
 		}
-		//if (xQueueReceive(xQueueY1, &(adcY1), 5)) {
-			//send_data_analog_uart(adcY1, head_y, eof);
-		//}
-		//if (xQueueReceive(xQueueX2, &(adcX2), 5)) {
-			//send_data_analog_uart(adcX2, head_x2, eof);
-		//}
-		//if (xQueueReceive(xQueueY2, &(adcY2), 5)) {
-			//send_data_analog_uart(adcY2, head_y2, eof);
-		//}
+
 		if (xQueueReceive(xQueueBut, &(but_data), 2)) {
 			send_data_but_uart(but_data.head, but_data.value, eof);
 		}
 	
 	}
 	
-	//vTaskDelay(10 / portTICK_PERIOD_MS);
 }
 
 //----------------------------------- MAIN ----------------------------------------
@@ -637,25 +579,12 @@ int main(void) {
 	xQueueADC = xQueueCreate(100, sizeof(adcData));
 	if (xQueueADC == NULL)
 		printf("Falha em criar a queue xQueuexX1");
-		
-	//xQueueY1 = xQueueCreate(100, sizeof(adcData));
-	//if (xQueueY1 == NULL)
-		//printf("Falha em criar a queue xQueueY1 \n");
-		//
-	//xQueueX2 = xQueueCreate(100, sizeof(adcData));
-	//if (xQueueX2 == NULL)
-	//printf("Falha em criar a queue xQueuexX2");
-	//
-	//xQueueY2 = xQueueCreate(100, sizeof(adcData));
-	//if (xQueueY2 == NULL)
-	//printf("Falha em criar a queue xQueueY2 \n");
-			
+
 	xQueueBut = xQueueCreate(100, sizeof(adcData));
 	if (xQueueBut == NULL)
 		printf("Falha em criar a queue xQueueBut \n");
 
 	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
-	//xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
 
 	vTaskStartScheduler();
 
