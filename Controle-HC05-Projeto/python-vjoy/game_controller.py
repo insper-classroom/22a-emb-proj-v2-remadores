@@ -28,6 +28,9 @@ class SerialControllerInterface:
             logging.debug("Received INCOMING: {}".format(self.incoming))
 
         dataHead = self.ser.read()
+
+        print(dataHead)
+        
         dataMSB = self.ser.read()
         dataLSB = self.ser.read()
 

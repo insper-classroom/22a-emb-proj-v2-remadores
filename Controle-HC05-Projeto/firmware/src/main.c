@@ -51,7 +51,7 @@
 #define BUT3_PIO					PIOD
 #define BUT3_PIO_ID					ID_PIOD
 #define BUT3_IDX					25
-#define BUT3_IDX_MASK				(1 << BUT3_IDX) 
+#define BUT3_IDX_MASK				(1 << BUT3_IDX)
 
 //AFEC para o Eixo X do Analógico da esquerda
 #define AFEC_VRX					AFEC1
@@ -162,9 +162,9 @@ void but_amarelo_callback(){
 	if(pio_get(BUT_PIO, PIO_INPUT, BUT_IDX_MASK) == 0) {
 		but_amarelo = 1;
 		pio_set(LED1_PIO, LED1_IDX_MASK);
-	} else {
+		} else {
 		but_amarelo = 0;
-		pio_clear(LED1_PIO, LED1_IDX_MASK);		
+		pio_clear(LED1_PIO, LED1_IDX_MASK);
 	}
 	
 	but_amarelo_data.value = but_amarelo;
@@ -183,7 +183,7 @@ void but_verde_callback(){
 	if (pio_get(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK) == 0){
 		but_verde = 1;
 		pio_set(LED2_PIO, LED2_IDX_MASK);
-	} else{
+		} else{
 		but_verde = 0;
 		pio_clear(LED2_PIO, LED2_IDX_MASK);
 	}
@@ -205,7 +205,7 @@ void but_vermelho_callback(){
 	if(pio_get(BUT2_PIO, PIO_INPUT, BUT2_IDX_MASK) == 0) {
 		but_vermelho = 1;
 		pio_set(LED3_PIO, LED3_IDX_MASK);
-	} else {
+		} else {
 		but_vermelho = 0;
 		pio_clear(LED3_PIO, LED3_IDX_MASK);
 	}
@@ -226,7 +226,7 @@ void but_azul_callback(){
 	if(pio_get(BUT3_PIO, PIO_INPUT, BUT3_IDX_MASK) == 0) {
 		but_azul = 1;
 		pio_set(LED4_PIO, LED4_IDX_MASK);
-	} else {
+		} else {
 		but_azul = 0;
 		pio_clear(LED4_PIO, LED4_IDX_MASK);
 	}
@@ -247,7 +247,7 @@ static void AFEC_vrx_Callback(void) {
 	xQueueSendFromISR(xQueueADC, &adc, &xHigherPriorityTaskWoken);
 }
 
-static void AFEC_vry_Callback(void) { 
+static void AFEC_vry_Callback(void) {
 	adcData adc;
 	char head_y = 'y';
 
@@ -268,11 +268,11 @@ static void AFEC_rx_Callback(void) {
 }
 
 static void AFEC_ry_Callback(void) {
-	adcData adc;	
+	adcData adc;
 	char head_y2 = 'z';
 	
 	adc.value = afec_channel_get_value(AFEC_VRY2, AFEC_VRY2_CHANNEL);
-	adc.head = head_y2; 
+	adc.head = head_y2;
 	BaseType_t xHigherPriorityTaskWoken = pdTRUE;
 	xQueueSendFromISR(xQueueADC, &adc, &xHigherPriorityTaskWoken);
 }
@@ -298,10 +298,10 @@ void io_init(void) {
 
 	// Ativa PIOs
 	pmc_enable_periph_clk(LED_PIO_ID);
-	pmc_enable_periph_clk(LED1_PIO_ID);	
-	pmc_enable_periph_clk(LED2_PIO_ID);	
-	pmc_enable_periph_clk(LED3_PIO_ID);	
-	pmc_enable_periph_clk(LED4_PIO_ID);	
+	pmc_enable_periph_clk(LED1_PIO_ID);
+	pmc_enable_periph_clk(LED2_PIO_ID);
+	pmc_enable_periph_clk(LED3_PIO_ID);
+	pmc_enable_periph_clk(LED4_PIO_ID);
 
 	pmc_enable_periph_clk(BUT_PIO_ID);
 	pmc_enable_periph_clk(BUT1_PIO_ID);
@@ -319,7 +319,7 @@ void io_init(void) {
 
 	configure_pio_input(BUT_PIO, PIO_INPUT, BUT_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT_PIO_ID);
 	configure_interruption(BUT_PIO, BUT_PIO_ID, BUT_IDX_MASK, PIO_IT_EDGE, but_amarelo_callback, 4);
-	  
+	
 	configure_pio_input(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT1_PIO_ID);
 	configure_interruption(BUT1_PIO, BUT1_PIO_ID, BUT1_IDX_MASK, PIO_IT_EDGE, but_verde_callback, 4);
 	
@@ -430,63 +430,63 @@ void TC1_Handler(void) {
 	UNUSED(ul_dummy);
 
 	/* Selecina canal e inicializa conversão */
- 	afec_channel_enable(AFEC_VRX, AFEC_VRX_CHANNEL);
- 	afec_start_software_conversion(AFEC_VRX);
- 	
+	afec_channel_enable(AFEC_VRX, AFEC_VRX_CHANNEL);
+	afec_start_software_conversion(AFEC_VRX);
+	
 	afec_channel_enable(AFEC_VRY, AFEC_VRY_CHANNEL);
 	afec_start_software_conversion(AFEC_VRY);
 	
- 	afec_channel_enable(AFEC_VRX2, AFEC_VRX2_CHANNEL);
- 	afec_start_software_conversion(AFEC_VRX2);
- 		
- 	afec_channel_enable(AFEC_VRY2, AFEC_VRY2_CHANNEL);
- 	afec_start_software_conversion(AFEC_VRY2);
+	afec_channel_enable(AFEC_VRX2, AFEC_VRX2_CHANNEL);
+	afec_start_software_conversion(AFEC_VRX2);
+	
+	afec_channel_enable(AFEC_VRY2, AFEC_VRY2_CHANNEL);
+	afec_start_software_conversion(AFEC_VRY2);
 
 }
 
 
 static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel,
-                            afec_callback_t callback) {
-  /*************************************
-   * Ativa e configura AFEC
-   *************************************/
-  /* Ativa AFEC - 0 */
+afec_callback_t callback) {
+	/*************************************
+	* Ativa e configura AFEC
+	*************************************/
+	/* Ativa AFEC - 0 */
 
-  /* struct de configuracao do AFEC */
-  struct afec_config afec_cfg;
+	/* struct de configuracao do AFEC */
+	struct afec_config afec_cfg;
 
-  /* Carrega parametros padrao */
-  afec_get_config_defaults(&afec_cfg);
+	/* Carrega parametros padrao */
+	afec_get_config_defaults(&afec_cfg);
 
-  /* Configura AFEC */
-  afec_init(afec, &afec_cfg);
+	/* Configura AFEC */
+	afec_init(afec, &afec_cfg);
 
-  /* Configura trigger por software */
-  afec_set_trigger(afec, AFEC_TRIG_SW);
+	/* Configura trigger por software */
+	afec_set_trigger(afec, AFEC_TRIG_SW);
 
-  /*** Configuracao específica do canal AFEC ***/
-  struct afec_ch_config afec_ch_cfg;
-  afec_ch_get_config_defaults(&afec_ch_cfg);
-  afec_ch_cfg.gain = AFEC_GAINVALUE_0;
-  afec_ch_set_config(afec, afec_channel, &afec_ch_cfg);
+	/*** Configuracao específica do canal AFEC ***/
+	struct afec_ch_config afec_ch_cfg;
+	afec_ch_get_config_defaults(&afec_ch_cfg);
+	afec_ch_cfg.gain = AFEC_GAINVALUE_0;
+	afec_ch_set_config(afec, afec_channel, &afec_ch_cfg);
 
-  /*
-  * Calibracao:
-  * Because the internal ADC offset is 0x200, it should cancel it and shift
-  down to 0.
-  */
-  afec_channel_set_analog_offset(afec, afec_channel, 0x200);
+	/*
+	* Calibracao:
+	* Because the internal ADC offset is 0x200, it should cancel it and shift
+	down to 0.
+	*/
+	afec_channel_set_analog_offset(afec, afec_channel, 0x200);
 
-  /***  Configura sensor de temperatura ***/
-  struct afec_temp_sensor_config afec_temp_sensor_cfg;
+	/***  Configura sensor de temperatura ***/
+	struct afec_temp_sensor_config afec_temp_sensor_cfg;
 
-  afec_temp_sensor_get_config_defaults(&afec_temp_sensor_cfg);
-  afec_temp_sensor_set_config(afec, &afec_temp_sensor_cfg);
+	afec_temp_sensor_get_config_defaults(&afec_temp_sensor_cfg);
+	afec_temp_sensor_set_config(afec, &afec_temp_sensor_cfg);
 
-  /* configura IRQ */
-  afec_set_callback(afec, afec_channel, callback, 1);
-  NVIC_SetPriority(afec_id, 4);
-  NVIC_EnableIRQ(afec_id);
+	/* configura IRQ */
+	afec_set_callback(afec, afec_channel, callback, 1);
+	NVIC_SetPriority(afec_id, 4);
+	NVIC_EnableIRQ(afec_id);
 }
 
 
@@ -508,8 +508,8 @@ void TC_init(Tc *TC, int ID_TC, int TC_CHANNEL, int freq) {
 
 //----------------------------------- TASKS ----------------------------------------
 
-void send_data_analog_uart(adcData adc_data, char head, char eof){
-	usart_write(USART_COM, head);
+void send_data_analog_uart(adcData adc_data, char eof){
+	usart_write(USART_COM, adc_data.head);
 	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
 	
 	usart_write(USART_COM,  (adc_data.value >> 8));
@@ -541,85 +541,100 @@ void send_data_but_uart(char adc_head, char but_flag, char eof){
 }
 
 
-//void task_afec(void) {
-	//
-	//afec_enable(AFEC1);
-	//afec_enable(AFEC0);
-	//TC_init(TC0, ID_TC1, 1, 10);
-	//tc_start(TC0, 1);
-//
-	//while(1) {
-		//
-		///* Selecina canal e inicializa conversão */
-		//config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
-		//afec_channel_enable(AFEC_VRX, AFEC_VRX_CHANNEL);
-	 	//afec_start_software_conversion(AFEC_VRX);
-		//vTaskDelay(10);
-		 //
-	 	//config_AFEC_pot(AFEC_VRY, AFEC_VRY_ID, AFEC_VRY_CHANNEL, AFEC_vry_Callback);
-		//afec_channel_enable(AFEC_VRY, AFEC_VRY_CHANNEL);
-		//afec_start_software_conversion(AFEC_VRY);
-			 //vTaskDelay(10);
-//
-	//
-	  	//config_AFEC_pot(AFEC_VRX2, AFEC_VRX2_ID, AFEC_VRX2_CHANNEL, AFEC_rx_Callback);
-				//afec_channel_enable(AFEC_VRX2, AFEC_VRX2_CHANNEL);
-	 	//afec_start_software_conversion(AFEC_VRX2);  
-		  		 //vTaskDelay(10);
-//
-		//config_AFEC_pot(AFEC_VRY2, AFEC_VRY2_ID, AFEC_VRY2_CHANNEL, AFEC_ry_Callback);
-	 	//afec_channel_enable(AFEC_VRY2, AFEC_VRY2_CHANNEL);
-	 	//afec_start_software_conversion(AFEC_VRY2);
-		 //vTaskDelay(10);
-//
-	//}
-//}
+void task_afec(void) {
+
+	afec_enable(AFEC1);
+	afec_enable(AFEC0);
+	TC_init(TC0, ID_TC1, 1, 10);
+	tc_start(TC0, 1);
+
+	while(1) {
+
+		/* Selecina canal e inicializa conversão */
+		config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
+		afec_channel_enable(AFEC_VRX, AFEC_VRX_CHANNEL);
+		afec_start_software_conversion(AFEC_VRX);
+		vTaskDelay(10);
+
+		config_AFEC_pot(AFEC_VRY, AFEC_VRY_ID, AFEC_VRY_CHANNEL, AFEC_vry_Callback);
+		afec_channel_enable(AFEC_VRY, AFEC_VRY_CHANNEL);
+		afec_start_software_conversion(AFEC_VRY);
+		vTaskDelay(10);
+
+		config_AFEC_pot(AFEC_VRX2, AFEC_VRX2_ID, AFEC_VRX2_CHANNEL, AFEC_rx_Callback);
+		afec_channel_enable(AFEC_VRX2, AFEC_VRX2_CHANNEL);
+		afec_start_software_conversion(AFEC_VRX2);
+		vTaskDelay(10);
+
+		config_AFEC_pot(AFEC_VRY2, AFEC_VRY2_ID, AFEC_VRY2_CHANNEL, AFEC_ry_Callback);
+		afec_channel_enable(AFEC_VRY2, AFEC_VRY2_CHANNEL);
+		afec_start_software_conversion(AFEC_VRY2);
+		vTaskDelay(10);
+
+	}
+}
+
 
 void task_bluetooth(void) {
 	printf("Task Bluetooth started \n");
 	
 	printf("Inicializando HC05 \n");
 	
-	afec_enable(AFEC0);
-	afec_enable(AFEC1);
-	TC_init(TC0, ID_TC1, 1, 2);
-	tc_start(TC0, 1);
-	
-	config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
-	config_AFEC_pot(AFEC_VRY, AFEC_VRY_ID, AFEC_VRY_CHANNEL, AFEC_vry_Callback);
-	config_AFEC_pot(AFEC_VRX2, AFEC_VRX2_ID, AFEC_VRX2_CHANNEL, AFEC_rx_Callback);
-	config_AFEC_pot(AFEC_VRY2, AFEC_VRY2_ID, AFEC_VRY2_CHANNEL, AFEC_ry_Callback);
-	
 	config_usart0();
 	hc05_init();
 	io_init();
 
 	char eof = 'X';
+	char head_x = 'h';
+	char head_y = 'y';
+	char head_x2 = 'i';
+	char head_y2 = 'z';
 
-		
+	
 	adcDataBut but_data;
 	adcData adcDados;
-	//adcData adcY1;
-	//adcData adcX2;
-	//adcData adcY2;
+	uint valor_anterior_x = 0;
+	uint valor_anterior_y = 0;
+	uint valor_anterior_x2 = 0;
+	uint valor_anterior_y2 = 0;
 	
 	while(1) {
-		if (xQueueReceive(xQueueADC, &(adcDados), 5)) {
-			send_data_analog_uart(adcDados, adcDados.head, eof);
+		if (xQueueReceive(xQueueADC, &(adcDados), 10)) {
+			//printf("%c   %04d\n", adcDados.head, adcDados.value);
+			
+			if (adcDados.head == head_x){
+				if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= valor_anterior_x-500){
+					send_data_analog_uart(adcDados, eof);
+					valor_anterior_x = adcDados.value;
+				}
+				
+			} if (adcDados.head == head_y){
+				if (adcDados.value >= valor_anterior_y+500 || adcDados.value <= valor_anterior_y-500){
+					send_data_analog_uart(adcDados,eof);
+					valor_anterior_y = adcDados.value;
+				}
+				
+			} if (adcDados.head == head_x2){
+				if (adcDados.value >= valor_anterior_x2+500 || adcDados.value <= valor_anterior_x2-500){
+					send_data_analog_uart(adcDados,eof);
+					valor_anterior_x2 = adcDados.value;
+				}
+				
+			} if (adcDados.head == head_y2){
+				if (adcDados.value >= valor_anterior_y2+500 || adcDados.value <= valor_anterior_y2-500){
+					send_data_analog_uart(adcDados,eof);
+					valor_anterior_y2 = adcDados.value;
+				}
+				
+			}
+			
+			
 		}
-		//if (xQueueReceive(xQueueY1, &(adcY1), 5)) {
-			//send_data_analog_uart(adcY1, head_y, eof);
-		//}
-		//if (xQueueReceive(xQueueX2, &(adcX2), 5)) {
-			//send_data_analog_uart(adcX2, head_x2, eof);
-		//}
-		//if (xQueueReceive(xQueueY2, &(adcY2), 5)) {
-			//send_data_analog_uart(adcY2, head_y2, eof);
-		//}
+	
 		if (xQueueReceive(xQueueBut, &(but_data), 2)) {
 			send_data_but_uart(but_data.head, but_data.value, eof);
 		}
-	
+		
 	}
 	
 	//vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -634,28 +649,16 @@ int main(void) {
 	configure_console();
 	
 	
-	xQueueADC = xQueueCreate(100, sizeof(adcData));
+	xQueueADC = xQueueCreate(1, sizeof(adcData));
 	if (xQueueADC == NULL)
-		printf("Falha em criar a queue xQueuexX1");
-		
-	//xQueueY1 = xQueueCreate(100, sizeof(adcData));
-	//if (xQueueY1 == NULL)
-		//printf("Falha em criar a queue xQueueY1 \n");
-		//
-	//xQueueX2 = xQueueCreate(100, sizeof(adcData));
-	//if (xQueueX2 == NULL)
-	//printf("Falha em criar a queue xQueuexX2");
-	//
-	//xQueueY2 = xQueueCreate(100, sizeof(adcData));
-	//if (xQueueY2 == NULL)
-	//printf("Falha em criar a queue xQueueY2 \n");
-			
+	printf("Falha em criar a queue xQueuexX1");
+	
 	xQueueBut = xQueueCreate(100, sizeof(adcData));
 	if (xQueueBut == NULL)
-		printf("Falha em criar a queue xQueueBut \n");
+	printf("Falha em criar a queue xQueueBut \n");
 
 	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
-	//xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
+	xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
 
 	vTaskStartScheduler();
 
