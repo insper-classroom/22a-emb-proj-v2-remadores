@@ -5,6 +5,7 @@
 #include "conf_board.h"
 #include <string.h>
 
+
 //----------------------------------- DEFINES ----------------------------------------
 
 #define LED_PIO						PIOC
@@ -113,6 +114,10 @@ typedef struct {
 
 QueueHandle_t xQueueBut;
 QueueHandle_t xQueueADC;
+//QueueHandle_t xQueueY1;
+//QueueHandle_t xQueueX2;
+//QueueHandle_t xQueueY2;
+
 
 /* Called if stack overflow during execution */
 extern void vApplicationStackOverflowHook(xTaskHandle *pxTask,
@@ -423,7 +428,7 @@ void TC1_Handler(void) {
 
 	/* Avoid compiler warning */
 	UNUSED(ul_dummy);
-	
+
 	/* Selecina canal e inicializa conversão */
 	afec_channel_enable(AFEC_VRX, AFEC_VRX_CHANNEL);
 	afec_start_software_conversion(AFEC_VRX);
@@ -439,9 +444,7 @@ void TC1_Handler(void) {
 
 }
 
-static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel, afec_callback_t callback) {
 
-<<<<<<< HEAD
 static void config_AFEC_pot(Afec *afec, uint32_t afec_id, uint32_t afec_channel,
 afec_callback_t callback) {
 	/*************************************
@@ -484,42 +487,6 @@ afec_callback_t callback) {
 	afec_set_callback(afec, afec_channel, callback, 1);
 	NVIC_SetPriority(afec_id, 4);
 	NVIC_EnableIRQ(afec_id);
-=======
-  struct afec_config afec_cfg;
-
-  /* Carrega parametros padrao */
-  afec_get_config_defaults(&afec_cfg);
-
-  /* Configura AFEC */
-  afec_init(afec, &afec_cfg);
-
-  /* Configura trigger por software */
-  afec_set_trigger(afec, AFEC_TRIG_SW);
-
-  /*** Configuracao específica do canal AFEC ***/
-  struct afec_ch_config afec_ch_cfg;
-  afec_ch_get_config_defaults(&afec_ch_cfg);
-  afec_ch_cfg.gain = AFEC_GAINVALUE_0;
-  afec_ch_set_config(afec, afec_channel, &afec_ch_cfg);
-
-  /*
-  * Calibracao:
-  * Because the internal ADC offset is 0x200, it should cancel it and shift
-  down to 0.
-  */
-  afec_channel_set_analog_offset(afec, afec_channel, 0x200);
-
-  /***  Configura sensor de temperatura ***/
-  struct afec_temp_sensor_config afec_temp_sensor_cfg;
-
-  afec_temp_sensor_get_config_defaults(&afec_temp_sensor_cfg);
-  afec_temp_sensor_set_config(afec, &afec_temp_sensor_cfg);
-
-  /* configura IRQ */
-  afec_set_callback(afec, afec_channel, callback, 1);
-  NVIC_SetPriority(afec_id, 4);
-  NVIC_EnableIRQ(afec_id);
->>>>>>> 72873e31e44bdca75b517468603f2613e2ac7ec0
 }
 
 
@@ -573,7 +540,6 @@ void send_data_but_uart(char adc_head, char but_flag, char eof){
 	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
 }
 
-<<<<<<< HEAD
 
 void task_afec(void) {
 
@@ -609,33 +575,16 @@ void task_afec(void) {
 }
 
 
-=======
->>>>>>> 72873e31e44bdca75b517468603f2613e2ac7ec0
 void task_bluetooth(void) {
 	printf("Task Bluetooth started \n");
 	
 	printf("Inicializando HC05 \n");
 	
-<<<<<<< HEAD
-=======
-	TC_init(TC0, ID_TC1, 1, 2);
-	tc_start(TC0, 1);
-	
-	afec_enable(AFEC0);
-	afec_enable(AFEC1);
-	
-	config_AFEC_pot(AFEC_VRX, AFEC_VRX_ID, AFEC_VRX_CHANNEL, AFEC_vrx_Callback);
-	config_AFEC_pot(AFEC_VRY, AFEC_VRY_ID, AFEC_VRY_CHANNEL, AFEC_vry_Callback);
-	config_AFEC_pot(AFEC_VRX2, AFEC_VRX2_ID, AFEC_VRX2_CHANNEL, AFEC_rx_Callback);
-	config_AFEC_pot(AFEC_VRY2, AFEC_VRY2_ID, AFEC_VRY2_CHANNEL, AFEC_ry_Callback);
-	
->>>>>>> 72873e31e44bdca75b517468603f2613e2ac7ec0
 	config_usart0();
 	hc05_init();
 	io_init();
 
 	char eof = 'X';
-<<<<<<< HEAD
 	char head_x = 'h';
 	char head_y = 'y';
 	char head_x2 = 'i';
@@ -682,24 +631,13 @@ void task_bluetooth(void) {
 			
 		}
 	
-=======
-		
-	adcDataBut but_data;
-	adcData adcDados;
-	
-	while(1) {
-		
-		if (xQueueReceive(xQueueADC, &(adcDados), 5)) {
-			send_data_analog_uart(adcDados, adcDados.head, eof);
-		}
-
->>>>>>> 72873e31e44bdca75b517468603f2613e2ac7ec0
 		if (xQueueReceive(xQueueBut, &(but_data), 2)) {
 			send_data_but_uart(but_data.head, but_data.value, eof);
 		}
 		
 	}
 	
+	//vTaskDelay(10 / portTICK_PERIOD_MS);
 }
 
 //----------------------------------- MAIN ----------------------------------------
@@ -713,22 +651,14 @@ int main(void) {
 	
 	xQueueADC = xQueueCreate(1, sizeof(adcData));
 	if (xQueueADC == NULL)
-<<<<<<< HEAD
 	printf("Falha em criar a queue xQueuexX1");
 	
-=======
-		printf("Falha em criar a queue xQueuexX1");
-
->>>>>>> 72873e31e44bdca75b517468603f2613e2ac7ec0
 	xQueueBut = xQueueCreate(100, sizeof(adcData));
 	if (xQueueBut == NULL)
 	printf("Falha em criar a queue xQueueBut \n");
 
 	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
-<<<<<<< HEAD
 	xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
-=======
->>>>>>> 72873e31e44bdca75b517468603f2613e2ac7ec0
 
 	vTaskStartScheduler();
 
