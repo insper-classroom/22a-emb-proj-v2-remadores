@@ -12,25 +12,30 @@
 #define LED_IDX						8
 #define LED_IDX_MASK				(1 << LED_IDX)
 
-#define LED1_PIO						PIOC
+#define LED1_PIO					PIOC
 #define LED1_PIO_ID					ID_PIOC
-#define LED1_IDX						13
+#define LED1_IDX					13
 #define LED1_IDX_MASK				(1 << LED1_IDX)
 
-#define LED2_PIO						PIOD
+#define LED2_PIO					PIOD
 #define LED2_PIO_ID					ID_PIOD
-#define LED2_IDX						30
+#define LED2_IDX					30
 #define LED2_IDX_MASK				(1 << LED2_IDX)
 
-#define LED3_PIO						PIOD
+#define LED3_PIO					PIOD
 #define LED3_PIO_ID					ID_PIOD
-#define LED3_IDX						11
+#define LED3_IDX					11
 #define LED3_IDX_MASK				(1 << LED3_IDX)
 
-#define LED4_PIO						PIOA
+#define LED4_PIO					PIOA
 #define LED4_PIO_ID					ID_PIOA
-#define LED4_IDX						6
+#define LED4_IDX					6
 #define LED4_IDX_MASK				(1 << LED4_IDX)
+
+#define LED5_PIO					PIOC
+#define LED5_PIO_ID					ID_PIOC
+#define LED5_IDX					19
+#define LED5_IDX_MASK				(1 << LED5_IDX)
 
 #define BUT_PIO						PIOD
 #define BUT_PIO_ID					ID_PIOD
@@ -51,6 +56,11 @@
 #define BUT3_PIO_ID					ID_PIOD
 #define BUT3_IDX					25
 #define BUT3_IDX_MASK				(1 << BUT3_IDX)
+
+#define BUT4_PIO					PIOD
+#define BUT4_PIO_ID					ID_PIOD
+#define BUT4_IDX					26
+#define BUT4_IDX_MASK				(1 << BUT4_IDX)
 
 //AFEC para o Eixo X do Analógico da esquerda
 #define AFEC_VRX					AFEC1
@@ -82,6 +92,8 @@
 #define USART_COM					USART0
 #define USART_COM_ID				ID_USART0
 #endif
+
+volatile char status_led = 0;
 
 //----------------------------------- DEFINES RTOS ----------------------------------------
 
@@ -189,7 +201,6 @@ void but_verde_callback(){
 	xQueueSendFromISR(xQueueBut, &but_verde_data, xHigherPriorityTaskWoken);
 }
 
-
 void but_vermelho_callback(){
 	adcDataBut but_vermelho_data;
 	
@@ -230,6 +241,40 @@ void but_azul_callback(){
 	but_azul_data.head = head_azul;
 	
 	xQueueSendFromISR(xQueueBut, &but_azul_data, xHigherPriorityTaskWoken);
+}
+
+void but_desliga_callback(){
+	adcDataBut but_desliga_data;
+	
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	char head_desliga = 'E';
+	char but_desliga;
+	
+	if(pio_get(BUT4_PIO, PIO_INPUT, BUT4_IDX_MASK) == 0) {
+		
+		if (status_led == 0) {
+			pio_clear(LED5_PIO, LED5_IDX_MASK);
+			but_desliga = 0;
+			status_led = 1;
+			
+			but_desliga_data.value = but_desliga;
+			but_desliga_data.head = head_desliga;
+			
+			xQueueSendFromISR(xQueueBut, &but_desliga_data, xHigherPriorityTaskWoken);
+		}
+		
+		else {
+			pio_set(LED5_PIO, LED5_IDX_MASK);
+			but_desliga = 1;
+			status_led = 0;
+			
+			but_desliga_data.value = but_desliga;
+			but_desliga_data.head = head_desliga;
+			
+			xQueueSendFromISR(xQueueBut, &but_desliga_data, xHigherPriorityTaskWoken);
+		}
+	}
+	
 }
 
 static void AFEC_vrx_Callback(void) {
@@ -297,11 +342,13 @@ void io_init(void) {
 	pmc_enable_periph_clk(LED2_PIO_ID);
 	pmc_enable_periph_clk(LED3_PIO_ID);
 	pmc_enable_periph_clk(LED4_PIO_ID);
+	pmc_enable_periph_clk(LED5_PIO_ID);
 
 	pmc_enable_periph_clk(BUT_PIO_ID);
 	pmc_enable_periph_clk(BUT1_PIO_ID);
 	pmc_enable_periph_clk(BUT2_PIO_ID);
 	pmc_enable_periph_clk(BUT3_PIO_ID);
+	pmc_enable_periph_clk(BUT4_PIO_ID);
 
 	// Configura Pinos
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
@@ -310,6 +357,7 @@ void io_init(void) {
 	pio_configure(LED2_PIO, PIO_OUTPUT_0, LED2_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 	pio_configure(LED3_PIO, PIO_OUTPUT_0, LED3_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 	pio_configure(LED4_PIO, PIO_OUTPUT_0, LED4_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
+	pio_configure(LED5_PIO, PIO_OUTPUT_0, LED5_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 
 
 	configure_pio_input(BUT_PIO, PIO_INPUT, BUT_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT_PIO_ID);
@@ -323,6 +371,9 @@ void io_init(void) {
 	
 	configure_pio_input(BUT3_PIO, PIO_INPUT, BUT3_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT3_PIO_ID);
 	configure_interruption(BUT3_PIO, BUT3_PIO_ID, BUT3_IDX_MASK, PIO_IT_EDGE, but_azul_callback, 4);
+	
+	configure_pio_input(BUT4_PIO, PIO_INPUT, BUT4_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT4_PIO_ID);
+	configure_interruption(BUT4_PIO, BUT4_PIO_ID, BUT4_IDX_MASK, PIO_IT_EDGE, but_desliga_callback, 4);
 }
 
 static void configure_console(void) {
@@ -535,7 +586,6 @@ void send_data_but_uart(char adc_head, char but_flag, char eof){
 	while(!usart_is_tx_ready(USART_COM)) {vTaskDelay(10 / portTICK_PERIOD_MS);}
 }
 
-
 void task_afec(void) {
 
 	afec_enable(AFEC1);
@@ -569,7 +619,6 @@ void task_afec(void) {
 	}
 }
 
-
 void task_bluetooth(void) {
 	printf("Task Bluetooth started \n");
 	
@@ -584,64 +633,68 @@ void task_bluetooth(void) {
 	char head_y = 'y';
 	char head_x2 = 'i';
 	char head_y2 = 'z';
-
 	
 	adcDataBut but_data;
 	adcData adcDados;
+	
 	uint valor_anterior_x = 0;
 	uint valor_anterior_y = 0;
 	uint valor_anterior_x2 = 0;
 	uint valor_anterior_y2 = 0;
 	
 	while(1) {
-		if (xQueueReceive(xQueueADC, &(adcDados), 10)) {
-			
-			if (adcDados.head == head_x){
-				if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= valor_anterior_x-500){
-					send_data_analog_uart(adcDados, eof);
-					valor_anterior_x = adcDados.value;
-				}
+		
+		if (status_led == 0) {
+			if (xQueueReceive(xQueueADC, &(adcDados), 10)) {
 				
-			} if (adcDados.head == head_y){
-				if (adcDados.value >= valor_anterior_y+500 || adcDados.value <= valor_anterior_y-500){
-					send_data_analog_uart(adcDados,eof);
-					valor_anterior_y = adcDados.value;
+				if (adcDados.head == head_x){
+					if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= valor_anterior_x-500){
+						send_data_analog_uart(adcDados, eof);
+						valor_anterior_x = adcDados.value;
+					}
+					
+					} if (adcDados.head == head_y){
+					if (adcDados.value >= valor_anterior_y+500 || adcDados.value <= valor_anterior_y-500){
+						send_data_analog_uart(adcDados,eof);
+						valor_anterior_y = adcDados.value;
+					}
+					
+					} if (adcDados.head == head_x2){
+					if (adcDados.value >= valor_anterior_x2+500 || adcDados.value <= valor_anterior_x2-500){
+						send_data_analog_uart(adcDados,eof);
+						valor_anterior_x2 = adcDados.value;
+					}
+					
+					} if (adcDados.head == head_y2){
+					if (adcDados.value >= valor_anterior_y2+500 || adcDados.value <= valor_anterior_y2-500){
+						send_data_analog_uart(adcDados,eof);
+						valor_anterior_y2 = adcDados.value;
+					}
+					
 				}
-				
-			} if (adcDados.head == head_x2){
-				if (adcDados.value >= valor_anterior_x2+500 || adcDados.value <= valor_anterior_x2-500){
-					send_data_analog_uart(adcDados,eof);
-					valor_anterior_x2 = adcDados.value;
-				}
-				
-			} if (adcDados.head == head_y2){
-				if (adcDados.value >= valor_anterior_y2+500 || adcDados.value <= valor_anterior_y2-500){
-					send_data_analog_uart(adcDados,eof);
-					valor_anterior_y2 = adcDados.value;
-				}
-				
+			}
+
+			if (xQueueReceive(xQueueBut, &(but_data), 2)) {
+				send_data_but_uart(but_data.head, but_data.value, eof);
 			}
 			
-			
 		}
-	
-		if (xQueueReceive(xQueueBut, &(but_data), 2)) {
-			send_data_but_uart(but_data.head, but_data.value, eof);
+		
+		else {
+			printf("Comunicação interrompida: CONTROLLER OFF \n");
 		}
 		
 	}
 	
-	//vTaskDelay(10 / portTICK_PERIOD_MS);
 }
 
 //----------------------------------- MAIN ----------------------------------------
 
 int main(void) {
-
+	
 	sysclk_init();
 	board_init();
 	configure_console();
-	
 	
 	xQueueADC = xQueueCreate(1, sizeof(adcData));
 	if (xQueueADC == NULL)
