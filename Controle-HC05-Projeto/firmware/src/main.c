@@ -190,7 +190,7 @@ void but_verde_callback(){
 	if (pio_get(BUT1_PIO, PIO_INPUT, BUT1_IDX_MASK) == 0){
 		but_verde = 1;
 		pio_set(LED2_PIO, LED2_IDX_MASK);
-		} else{
+	} else{
 		but_verde = 0;
 		pio_clear(LED2_PIO, LED2_IDX_MASK);
 	}
@@ -642,30 +642,32 @@ void task_bluetooth(void) {
 	uint valor_anterior_x2 = 0;
 	uint valor_anterior_y2 = 0;
 	
+	pio_set(LED5_PIO, LED5_IDX_MASK);
+
+	
 	while(1) {
 		
 		if (status_led == 0) {
 			if (xQueueReceive(xQueueADC, &(adcDados), 10)) {
-				
 				if (adcDados.head == head_x){
 					if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= valor_anterior_x-500){
 						send_data_analog_uart(adcDados, eof);
 						valor_anterior_x = adcDados.value;
 					}
 					
-					} if (adcDados.head == head_y){
+				} if (adcDados.head == head_y){
 					if (adcDados.value >= valor_anterior_y+500 || adcDados.value <= valor_anterior_y-500){
 						send_data_analog_uart(adcDados,eof);
 						valor_anterior_y = adcDados.value;
 					}
 					
-					} if (adcDados.head == head_x2){
+				} if (adcDados.head == head_x2){
 					if (adcDados.value >= valor_anterior_x2+500 || adcDados.value <= valor_anterior_x2-500){
 						send_data_analog_uart(adcDados,eof);
 						valor_anterior_x2 = adcDados.value;
 					}
-					
-					} if (adcDados.head == head_y2){
+						
+				} if (adcDados.head == head_y2){
 					if (adcDados.value >= valor_anterior_y2+500 || adcDados.value <= valor_anterior_y2-500){
 						send_data_analog_uart(adcDados,eof);
 						valor_anterior_y2 = adcDados.value;
@@ -674,7 +676,7 @@ void task_bluetooth(void) {
 				}
 			}
 
-			if (xQueueReceive(xQueueBut, &(but_data), 2)) {
+			if (xQueueReceive(xQueueBut, &(but_data), 1)) {
 				send_data_but_uart(but_data.head, but_data.value, eof);
 			}
 			
@@ -682,6 +684,8 @@ void task_bluetooth(void) {
 		
 		else {
 			printf("Comunicação interrompida: CONTROLLER OFF \n");
+			xQueueReset(xQueueBut);
+			xQueueReset(xQueueADC);
 		}
 		
 	}
