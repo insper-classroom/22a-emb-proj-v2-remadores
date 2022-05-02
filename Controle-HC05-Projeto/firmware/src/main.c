@@ -126,6 +126,8 @@ typedef struct {
 QueueHandle_t xQueueBut;
 QueueHandle_t xQueueADC;
 
+SemaphoreHandle_t xSemaphoreBut;
+
 /* Called if stack overflow during execution */
 extern void vApplicationStackOverflowHook(xTaskHandle *pxTask,
 signed char *pcTaskName) {
@@ -253,7 +255,7 @@ void but_desliga_callback(){
 	if(pio_get(BUT4_PIO, PIO_INPUT, BUT4_IDX_MASK) == 0) {
 		
 		if (status_led == 0) {
-			pio_clear(LED5_PIO, LED5_IDX_MASK);
+			pio_set(LED5_PIO, LED5_IDX_MASK);
 			but_desliga = 0;
 			status_led = 1;
 			
@@ -264,7 +266,7 @@ void but_desliga_callback(){
 		}
 		
 		else {
-			pio_set(LED5_PIO, LED5_IDX_MASK);
+			pio_clear(LED5_PIO, LED5_IDX_MASK);
 			but_desliga = 1;
 			status_led = 0;
 			
@@ -642,33 +644,31 @@ void task_bluetooth(void) {
 	uint valor_anterior_x2 = 0;
 	uint valor_anterior_y2 = 0;
 	
-	pio_set(LED5_PIO, LED5_IDX_MASK);
-
 	
 	while(1) {
 		
-		if (status_led == 0) {
+		if (status_led == 1) {
 			if (xQueueReceive(xQueueADC, &(adcDados), 10)) {
 				if (adcDados.head == head_x){
-					if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= abs(valor_anterior_x-200)){
+					if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= abs(valor_anterior_x-100)){
 						send_data_analog_uart(adcDados, eof);
 						valor_anterior_x = adcDados.value;
 					}
 					
 				} if (adcDados.head == head_y){
-					if (adcDados.value >= valor_anterior_y+500 || adcDados.value <= abs(valor_anterior_y-200)){
+					if (adcDados.value >= valor_anterior_y+500 || adcDados.value <= abs(valor_anterior_y-100)){
 						send_data_analog_uart(adcDados,eof);
 						valor_anterior_y = adcDados.value;
 					}
 					
 				} if (adcDados.head == head_x2){
-					if (adcDados.value >= valor_anterior_x2+500 || adcDados.value <= abs(valor_anterior_x2-200)){
+					if (adcDados.value >= valor_anterior_x2+500 || adcDados.value <= abs(valor_anterior_x2-100)){
 						send_data_analog_uart(adcDados,eof);
 						valor_anterior_x2 = adcDados.value;
 					}
 						
 				} if (adcDados.head == head_y2){
-					if (adcDados.value >= valor_anterior_y2+500 || adcDados.value <= abs(valor_anterior_y2-200)){
+					if (adcDados.value >= valor_anterior_y2+500 || adcDados.value <= abs(valor_anterior_y2-100)){
 						send_data_analog_uart(adcDados,eof);
 						valor_anterior_y2 = adcDados.value;
 					}

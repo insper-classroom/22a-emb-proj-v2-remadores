@@ -54,7 +54,7 @@ class SerialControllerInterface:
 
         elif dataHead == b'E':
             button = int.from_bytes(dataLSB, "big")
-            if button == 0:
+            if button == 1:
                 print("Comunicação interrompida: Controle desligado")
         
         else:
