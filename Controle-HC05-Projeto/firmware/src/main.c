@@ -650,25 +650,25 @@ void task_bluetooth(void) {
 		if (status_led == 0) {
 			if (xQueueReceive(xQueueADC, &(adcDados), 10)) {
 				if (adcDados.head == head_x){
-					if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= valor_anterior_x-500){
+					if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= abs(valor_anterior_x-200)){
 						send_data_analog_uart(adcDados, eof);
 						valor_anterior_x = adcDados.value;
 					}
 					
 				} if (adcDados.head == head_y){
-					if (adcDados.value >= valor_anterior_y+500 || adcDados.value <= valor_anterior_y-500){
+					if (adcDados.value >= valor_anterior_y+500 || adcDados.value <= abs(valor_anterior_y-200)){
 						send_data_analog_uart(adcDados,eof);
 						valor_anterior_y = adcDados.value;
 					}
 					
 				} if (adcDados.head == head_x2){
-					if (adcDados.value >= valor_anterior_x2+500 || adcDados.value <= valor_anterior_x2-500){
+					if (adcDados.value >= valor_anterior_x2+500 || adcDados.value <= abs(valor_anterior_x2-200)){
 						send_data_analog_uart(adcDados,eof);
 						valor_anterior_x2 = adcDados.value;
 					}
 						
 				} if (adcDados.head == head_y2){
-					if (adcDados.value >= valor_anterior_y2+500 || adcDados.value <= valor_anterior_y2-500){
+					if (adcDados.value >= valor_anterior_y2+500 || adcDados.value <= abs(valor_anterior_y2-200)){
 						send_data_analog_uart(adcDados,eof);
 						valor_anterior_y2 = adcDados.value;
 					}
