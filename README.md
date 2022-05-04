@@ -125,12 +125,14 @@ Esboço de como seria o controle (detalharemos melhor isso em uma próxima etapa
 ![Prototipo](https://user-images.githubusercontent.com/62647438/160212921-0a505798-483a-4319-9f75-e4fe6ecadd06.jpeg)
 
 
-Esboço feito no Fusion 360 de como queríamos que o controle fosse (se não tivéssemos que nos preocupar com fios, entre outras coisas).
+Esboço feito no `Fusion 360` de como queríamos que o controle fosse (se não tivéssemos que nos preocupar com fios, entre outras coisas).
 
-Vista lateral:
+**Vista lateral:**
+
 ![26ce53f2-c857-42b2-881e-c1327be141db](https://user-images.githubusercontent.com/62647438/166697801-a2f9260f-a905-48e3-af26-35c78cc03c7d.PNG)
 
-Vista de frente:
+**Vista frontal:**
+
 ![0eba9784-81c3-49e2-b2be-6e8af4a871f0](https://user-images.githubusercontent.com/62647438/166697836-fe767ec7-1862-430b-add6-52dc61501268.PNG)
 
 Além disso, o esboço pode ser acessado no seguinte link: https://a360.co/3OX8W6P .
