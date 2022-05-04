@@ -25,6 +25,8 @@ class SerialControllerInterface:
 
         while self.incoming != b'X':
             self.incoming = self.ser.read()
+            print("Esperando ...")
+
             logging.debug("Received INCOMING: {}".format(self.incoming))
 
         dataHead = self.ser.read()
@@ -37,6 +39,12 @@ class SerialControllerInterface:
         # print ("BUT: most", dataMSB)
         # print ("BUT: head", dataHead)
         print(dataOriginal)
+
+        if dataHead == b's':
+            status = int.from_bytes(dataLSB, "big")
+            if status == 1:
+                self.ser.write(b'1') #parei aqui 
+                print("Comunicação estabelecida")
         
         if dataHead == b'h':
             self.j.set_axis(pyvjoy.HID_USAGE_X, dataOriginal*8)
@@ -52,10 +60,10 @@ class SerialControllerInterface:
         elif dataHead == b'z':
             self.j.set_axis(pyvjoy.HID_USAGE_RY, dataOriginal*8)
 
-        elif dataHead == b'E':
-            button = int.from_bytes(dataLSB, "big")
-            if button == 1:
-                print("Comunicação interrompida: Controle desligado")
+        # elif dataHead == b'E':
+        #     button = int.from_bytes(dataLSB, "big")
+        #     if button == 1:
+        #         print("Comunicação interrompida: Controle desligado")
         
         else:
             head = dataHead.decode("utf-8") 
