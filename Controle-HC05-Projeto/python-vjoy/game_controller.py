@@ -43,7 +43,7 @@ class SerialControllerInterface:
         if dataHead == b's':
             status = int.from_bytes(dataLSB, "big")
             if status == 1:
-                self.ser.write(b'1') #parei aqui 
+                self.ser.write(b'1') 
                 print("Comunicação estabelecida")
         
         if dataHead == b'h':
@@ -60,11 +60,6 @@ class SerialControllerInterface:
         elif dataHead == b'z':
             self.j.set_axis(pyvjoy.HID_USAGE_RY, dataOriginal*8)
 
-        # elif dataHead == b'E':
-        #     button = int.from_bytes(dataLSB, "big")
-        #     if button == 1:
-        #         print("Comunicação interrompida: Controle desligado")
-        
         else:
             if (dataHead != b's'):
                 head = dataHead.decode("utf-8") 

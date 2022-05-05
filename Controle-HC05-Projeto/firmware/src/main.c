@@ -131,6 +131,11 @@ QueueHandle_t xQueueADC;
 void task_bluetooth(void);
 void task_handshake(void);
 
+ TaskHandle_t xHandleHandShake = NULL;
+ TaskHandle_t xHandleBluetooth = NULL;
+ TaskHandle_t xHandleAFEC = NULL;
+
+
 
 SemaphoreHandle_t xSemaphoreBut;
 
@@ -256,7 +261,6 @@ void inicializa_task_callback(){
 		mandou = 0;
 		inicializa = 1;
 	} else {
-		//vTaskDelete(task_bluetooth);
 		inicializa = 0;
 	}
 }
@@ -609,14 +613,23 @@ void task_afec(void) {
 void task_handshake(void){
 	config_usart0();
 	hc05_init();
+	
+	if (xHandleBluetooth != NULL) {
+		vTaskDelete(xHandleBluetooth);
+	}
+	
+	if (xHandleAFEC != NULL) {
+		vTaskDelete(xHandleAFEC);
+	}
+	
 	while (mandou == 0){
+		
 		if (inicializa){
 			char head = 's';
 			char but_status = 1;
 			char eof = 'X';
-				
-
 			char status = 'n';
+			
 			while (status == 'n'){
 				send_data_but_uart(head, but_status, eof);
 
@@ -624,35 +637,34 @@ void task_handshake(void){
 				if (status == '0x01'){
 					break;
 				}
+			}
+			
+			
+			printf("%s", "Comunicação estabelecida");
+			
+			pio_set(LED5_PIO, LED5_IDX_MASK);
+			
+			xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xHandleBluetooth);
+			xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xHandleAFEC);
+			status_led = 1;
+			mandou = 1;
+			
 		}
 		
-		
-		printf("%s", "Comunicação estabelecida");
-		
-		pio_set(LED5_PIO, LED5_IDX_MASK);
-				
-		xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
-		xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);	
-		status_led = 1;
-		mandou = 1;
-		
-		} 	
-		
 	}
-	
-	while (1)
-	{
-		if (inicializa == 0) {
-			pio_clear(LED5_PIO, LED5_IDX_MASK);
-			status_led = 0;
-		}
-	}
-	
+		
+		
+	while(1) { vTaskDelay(1000); }
 	
 }
-
+	
+	
 void task_bluetooth(void) {
 
+	
+	if (xHandleHandShake != NULL) {
+		vTaskDelete(xHandleHandShake);
+	}
 	
 	io_init();
 
@@ -673,7 +685,20 @@ void task_bluetooth(void) {
 	
 	while(1) {
 		
-		if (status_led == 1) {
+		if (inicializa == 0) {
+			pio_clear(LED5_PIO, LED5_IDX_MASK);
+			status_led = 0;
+			mandou = 0;
+			inicializa = 1;
+
+			printf("Comunicação interrompida: CONTROLLER OFF \n");
+			xQueueReset(xQueueBut);
+			xQueueReset(xQueueADC);
+			
+			xTaskCreate(task_handshake, "hs", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xHandleHandShake);
+		}
+		
+		if (status_led == 1 ) {
 			if (xQueueReceive(xQueueADC, &(adcDados), 10)) {
 				if (adcDados.head == head_x){
 					if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= abs(valor_anterior_x-100)){
@@ -708,12 +733,6 @@ void task_bluetooth(void) {
 			
 		}
 		
-		else {
-			printf("Comunicação interrompida: CONTROLLER OFF \n");
-			xQueueReset(xQueueBut);
-			xQueueReset(xQueueADC);
-		}
-		
 	}
 	
 }
@@ -737,12 +756,7 @@ int main(void) {
 	printf("Falha em criar a queue xQueueBut \n");
 	
 
-	xTaskCreate(task_handshake, "hs", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
-	
-
-	//vTaskDelete(xHandle);
-	//xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
-	//xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
+	xTaskCreate(task_handshake, "hs", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xHandleHandShake);
 
 	vTaskStartScheduler();
 
