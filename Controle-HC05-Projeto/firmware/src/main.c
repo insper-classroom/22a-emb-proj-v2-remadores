@@ -95,6 +95,8 @@
 
 volatile char status_led = 0;
 volatile char inicializa = 0;
+volatile char mandou = 0;
+
 //----------------------------------- DEFINES RTOS ----------------------------------------
 
 #define TASK_BLUETOOTH_STACK_SIZE				(4096*10 / sizeof(portSTACK_TYPE))
@@ -175,7 +177,7 @@ void but_amarelo_callback(){
 	if(pio_get(BUT_PIO, PIO_INPUT, BUT_IDX_MASK) == 0) {
 		but_amarelo = 1;
 		pio_set(LED1_PIO, LED1_IDX_MASK);
-		} else {
+	} else {
 		but_amarelo = 0;
 		pio_clear(LED1_PIO, LED1_IDX_MASK);
 	}
@@ -251,8 +253,10 @@ void but_azul_callback(){
 
 void inicializa_task_callback(){
 	if (inicializa == 0){
+		mandou = 0;
 		inicializa = 1;
-		} else {
+	} else {
+		//vTaskDelete(task_bluetooth);
 		inicializa = 0;
 	}
 }
@@ -605,7 +609,7 @@ void task_afec(void) {
 void task_handshake(void){
 	config_usart0();
 	hc05_init();
-	while (1){
+	while (mandou == 0){
 		if (inicializa){
 			char head = 's';
 			char but_status = 1;
@@ -630,13 +634,18 @@ void task_handshake(void){
 		xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
 		xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);	
 		status_led = 1;
+		mandou = 1;
 		
-	} 	else if (inicializa == 0) {
+		} 	
+		
+	}
+	
+	while (1)
+	{
+		if (inicializa == 0) {
 			pio_clear(LED5_PIO, LED5_IDX_MASK);
 			status_led = 0;
-	}
-		
-		
+		}
 	}
 	
 	

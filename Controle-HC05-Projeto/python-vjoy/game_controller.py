@@ -66,11 +66,12 @@ class SerialControllerInterface:
         #         print("Comunicação interrompida: Controle desligado")
         
         else:
-            head = dataHead.decode("utf-8") 
-            button = int.from_bytes(dataLSB, "big")
-            print(head)
-            print(button)
-            self.j.set_button(self.mapping.button[head], button)
+            if (dataHead != b's'):
+                head = dataHead.decode("utf-8") 
+                button = int.from_bytes(dataLSB, "big")
+                print(head)
+                print(button)
+                self.j.set_button(self.mapping.button[head], button)
 
         self.incoming = self.ser.read()
 
