@@ -631,8 +631,8 @@ void task_handshake(void){
 			char status = 'n';
 			
 			while (status == 'n'){
+				vTaskDelay(200);
 				send_data_but_uart(head, but_status, eof);
-
 				usart_read(USART_COM, &status);
 				if (status == '0x01'){
 					break;

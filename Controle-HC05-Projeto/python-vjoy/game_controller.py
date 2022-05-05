@@ -25,7 +25,6 @@ class SerialControllerInterface:
 
         while self.incoming != b'X':
             self.incoming = self.ser.read()
-            print("Esperando ...")
 
             logging.debug("Received INCOMING: {}".format(self.incoming))
 
