@@ -94,6 +94,8 @@
 #endif
 
 volatile char status_led = 0;
+volatile char inicializa = 0;
+volatile char mandou = 0;
 
 //----------------------------------- DEFINES RTOS ----------------------------------------
 
@@ -125,6 +127,15 @@ typedef struct {
 
 QueueHandle_t xQueueBut;
 QueueHandle_t xQueueADC;
+
+void task_bluetooth(void);
+void task_handshake(void);
+
+ TaskHandle_t xHandleHandShake = NULL;
+ TaskHandle_t xHandleBluetooth = NULL;
+ TaskHandle_t xHandleAFEC = NULL;
+
+
 
 SemaphoreHandle_t xSemaphoreBut;
 
@@ -171,7 +182,7 @@ void but_amarelo_callback(){
 	if(pio_get(BUT_PIO, PIO_INPUT, BUT_IDX_MASK) == 0) {
 		but_amarelo = 1;
 		pio_set(LED1_PIO, LED1_IDX_MASK);
-		} else {
+	} else {
 		but_amarelo = 0;
 		pio_clear(LED1_PIO, LED1_IDX_MASK);
 	}
@@ -245,38 +256,13 @@ void but_azul_callback(){
 	xQueueSendFromISR(xQueueBut, &but_azul_data, xHigherPriorityTaskWoken);
 }
 
-void but_desliga_callback(){
-	adcDataBut but_desliga_data;
-	
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	char head_desliga = 'E';
-	char but_desliga;
-	
-	if(pio_get(BUT4_PIO, PIO_INPUT, BUT4_IDX_MASK) == 0) {
-		
-		if (status_led == 0) {
-			pio_set(LED5_PIO, LED5_IDX_MASK);
-			but_desliga = 0;
-			status_led = 1;
-			
-			but_desliga_data.value = but_desliga;
-			but_desliga_data.head = head_desliga;
-			
-			xQueueSendFromISR(xQueueBut, &but_desliga_data, xHigherPriorityTaskWoken);
-		}
-		
-		else {
-			pio_clear(LED5_PIO, LED5_IDX_MASK);
-			but_desliga = 1;
-			status_led = 0;
-			
-			but_desliga_data.value = but_desliga;
-			but_desliga_data.head = head_desliga;
-			
-			xQueueSendFromISR(xQueueBut, &but_desliga_data, xHigherPriorityTaskWoken);
-		}
+void inicializa_task_callback(){
+	if (inicializa == 0){
+		mandou = 0;
+		inicializa = 1;
+	} else {
+		inicializa = 0;
 	}
-	
 }
 
 static void AFEC_vrx_Callback(void) {
@@ -344,13 +330,11 @@ void io_init(void) {
 	pmc_enable_periph_clk(LED2_PIO_ID);
 	pmc_enable_periph_clk(LED3_PIO_ID);
 	pmc_enable_periph_clk(LED4_PIO_ID);
-	pmc_enable_periph_clk(LED5_PIO_ID);
 
 	pmc_enable_periph_clk(BUT_PIO_ID);
 	pmc_enable_periph_clk(BUT1_PIO_ID);
 	pmc_enable_periph_clk(BUT2_PIO_ID);
 	pmc_enable_periph_clk(BUT3_PIO_ID);
-	pmc_enable_periph_clk(BUT4_PIO_ID);
 
 	// Configura Pinos
 	pio_configure(LED_PIO, PIO_OUTPUT_0, LED_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
@@ -359,7 +343,6 @@ void io_init(void) {
 	pio_configure(LED2_PIO, PIO_OUTPUT_0, LED2_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 	pio_configure(LED3_PIO, PIO_OUTPUT_0, LED3_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 	pio_configure(LED4_PIO, PIO_OUTPUT_0, LED4_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
-	pio_configure(LED5_PIO, PIO_OUTPUT_0, LED5_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 
 
 	configure_pio_input(BUT_PIO, PIO_INPUT, BUT_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT_PIO_ID);
@@ -374,8 +357,14 @@ void io_init(void) {
 	configure_pio_input(BUT3_PIO, PIO_INPUT, BUT3_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT3_PIO_ID);
 	configure_interruption(BUT3_PIO, BUT3_PIO_ID, BUT3_IDX_MASK, PIO_IT_EDGE, but_azul_callback, 4);
 	
+}
+
+void liga_desliga_button(void){
+	pmc_enable_periph_clk(LED5_PIO_ID);
+	pmc_enable_periph_clk(BUT4_PIO_ID);
+	pio_configure(LED5_PIO, PIO_OUTPUT_0, LED5_IDX_MASK, PIO_DEFAULT | PIO_DEBOUNCE);
 	configure_pio_input(BUT4_PIO, PIO_INPUT, BUT4_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE, BUT4_PIO_ID);
-	configure_interruption(BUT4_PIO, BUT4_PIO_ID, BUT4_IDX_MASK, PIO_IT_EDGE, but_desliga_callback, 4);
+	configure_interruption(BUT4_PIO, BUT4_PIO_ID, BUT4_IDX_MASK, PIO_IT_FALL_EDGE, inicializa_task_callback, 4);
 }
 
 static void configure_console(void) {
@@ -621,13 +610,62 @@ void task_afec(void) {
 	}
 }
 
-void task_bluetooth(void) {
-	printf("Task Bluetooth started \n");
-	
-	printf("Inicializando HC05 \n");
-	
+void task_handshake(void){
 	config_usart0();
 	hc05_init();
+	
+	if (xHandleBluetooth != NULL) {
+		vTaskDelete(xHandleBluetooth);
+	}
+	
+	if (xHandleAFEC != NULL) {
+		vTaskDelete(xHandleAFEC);
+	}
+	
+	while (mandou == 0){
+		
+		if (inicializa){
+			char head = 's';
+			char but_status = 1;
+			char eof = 'X';
+			char status = 'n';
+			
+			while (status == 'n'){
+				vTaskDelay(200);
+				send_data_but_uart(head, but_status, eof);
+				usart_read(USART_COM, &status);
+				if (status == '0x01'){
+					break;
+				}
+			}
+			
+			
+			printf("%s", "Comunicação estabelecida");
+			
+			pio_set(LED5_PIO, LED5_IDX_MASK);
+			
+			xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xHandleBluetooth);
+			xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xHandleAFEC);
+			status_led = 1;
+			mandou = 1;
+			
+		}
+		
+	}
+		
+		
+	while(1) { vTaskDelay(1000); }
+	
+}
+	
+	
+void task_bluetooth(void) {
+
+	
+	if (xHandleHandShake != NULL) {
+		vTaskDelete(xHandleHandShake);
+	}
+	
 	io_init();
 
 	char eof = 'X';
@@ -647,7 +685,20 @@ void task_bluetooth(void) {
 	
 	while(1) {
 		
-		if (status_led == 1) {
+		if (inicializa == 0) {
+			pio_clear(LED5_PIO, LED5_IDX_MASK);
+			status_led = 0;
+			mandou = 0;
+			inicializa = 1;
+
+			printf("Comunicação interrompida: CONTROLLER OFF \n");
+			xQueueReset(xQueueBut);
+			xQueueReset(xQueueADC);
+			
+			xTaskCreate(task_handshake, "hs", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xHandleHandShake);
+		}
+		
+		if (status_led == 1 ) {
 			if (xQueueReceive(xQueueADC, &(adcDados), 10)) {
 				if (adcDados.head == head_x){
 					if  (adcDados.value >= valor_anterior_x+500 || adcDados.value <= abs(valor_anterior_x-100)){
@@ -682,12 +733,6 @@ void task_bluetooth(void) {
 			
 		}
 		
-		else {
-			printf("Comunicação interrompida: CONTROLLER OFF \n");
-			xQueueReset(xQueueBut);
-			xQueueReset(xQueueADC);
-		}
-		
 	}
 	
 }
@@ -699,6 +744,8 @@ int main(void) {
 	sysclk_init();
 	board_init();
 	configure_console();
+	liga_desliga_button();
+
 	
 	xQueueADC = xQueueCreate(1, sizeof(adcData));
 	if (xQueueADC == NULL)
@@ -707,9 +754,9 @@ int main(void) {
 	xQueueBut = xQueueCreate(100, sizeof(adcData));
 	if (xQueueBut == NULL)
 	printf("Falha em criar a queue xQueueBut \n");
+	
 
-	xTaskCreate(task_bluetooth, "BLT", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
-	xTaskCreate(task_afec, "afec", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, NULL);
+	xTaskCreate(task_handshake, "hs", TASK_BLUETOOTH_STACK_SIZE, NULL,	TASK_BLUETOOTH_STACK_PRIORITY, &xHandleHandShake);
 
 	vTaskStartScheduler();
 
