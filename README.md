@@ -136,3 +136,8 @@ Esboço feito no `Fusion 360` de como queríamos que o controle fosse (se não t
 ![0eba9784-81c3-49e2-b2be-6e8af4a871f0](https://user-images.githubusercontent.com/62647438/166697836-fe767ec7-1862-430b-add6-52dc61501268.PNG)
 
 Além disso, o esboço pode ser acessado no seguinte link: https://a360.co/3OX8W6P .
+
+## Vídeos de Funcionamento e Teste com usuário (A+)
+
+### Funcionamento: https://youtu.be/MFPypHldZAY
+### Teste com usuário: https://youtu.be/7JLhKDh6tbU
