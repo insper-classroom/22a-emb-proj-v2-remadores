@@ -34,9 +34,6 @@ class SerialControllerInterface:
 
         dataOriginal = int.from_bytes(dataMSB + dataLSB, "big")
 
-        # print ("BUT: least", dataLSB)
-        # print ("BUT: most", dataMSB)
-        # print ("BUT: head", dataHead)
         print(dataOriginal)
 
         if dataHead == b's':
@@ -47,11 +44,9 @@ class SerialControllerInterface:
         
         if dataHead == b'h':
             self.j.set_axis(pyvjoy.HID_USAGE_X, dataOriginal*8)
-            # print(int.from_bytes(dataMSB + dataLSB, "big"))
 
         elif dataHead == b'y':
             self.j.set_axis(pyvjoy.HID_USAGE_Y, dataOriginal*8)
-            # print(int.from_bytes(dataMSB + dataLSB, "big"))
         
         elif dataHead == b'i':
             self.j.set_axis(pyvjoy.HID_USAGE_RX, dataOriginal*8)

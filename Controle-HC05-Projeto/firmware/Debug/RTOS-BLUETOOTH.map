@@ -10960,7 +10960,7 @@ OUTPUT(RTOS-BLUETOOTH.elf elf32-littlearm)
  .debug_macro   0x0002320c       0x16 src/main.o
  .debug_macro   0x00023222       0x1c src/main.o
 
-.debug_line     0x00000000    0x13178
+.debug_line     0x00000000    0x13177
  .debug_line    0x00000000      0xb4f src/ASF/common/services/clock/same70/sysclk.o
  .debug_line    0x00000b4f      0xc34 src/ASF/common/services/serial/usart_serial.o
  .debug_line    0x00001783      0xa4f src/ASF/common/services/sleepmgr/sam/sleepmgr.o
@@ -10984,9 +10984,9 @@ OUTPUT(RTOS-BLUETOOTH.elf elf32-littlearm)
  .debug_line    0x0000e686     0x11ea src/ASF/thirdparty/freertos/freertos-8.2.3/Source/queue.o
  .debug_line    0x0000f870     0x156e src/ASF/thirdparty/freertos/freertos-8.2.3/Source/tasks.o
  .debug_line    0x00010dde      0xdaf src/ASF/thirdparty/freertos/freertos-8.2.3/Source/timers.o
- .debug_line    0x00011b8d     0x15eb src/main.o
+ .debug_line    0x00011b8d     0x15ea src/main.o
 
-.debug_str      0x00000000    0x95023
+.debug_str      0x00000000    0x94ff2
  .debug_str     0x00000000    0x85ecc src/ASF/common/services/clock/same70/sysclk.o
                               0x865a1 (size before relaxing)
  .debug_str     0x00085ecc      0x576 src/ASF/common/services/serial/usart_serial.o
@@ -11033,8 +11033,8 @@ OUTPUT(RTOS-BLUETOOTH.elf elf32-littlearm)
                               0x8ac6a (size before relaxing)
  .debug_str     0x00091fb8      0x483 src/ASF/thirdparty/freertos/freertos-8.2.3/Source/timers.o
                               0x8a6f1 (size before relaxing)
- .debug_str     0x0009243b     0x2be8 src/main.o
-                              0x8f60b (size before relaxing)
+ .debug_str     0x0009243b     0x2bb7 src/main.o
+                              0x8f5da (size before relaxing)
 
 .debug_frame    0x00000000     0x3b38
  .debug_frame   0x00000000       0x88 src/ASF/common/services/clock/same70/sysclk.o

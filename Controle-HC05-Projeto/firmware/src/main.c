@@ -131,11 +131,9 @@ QueueHandle_t xQueueADC;
 void task_bluetooth(void);
 void task_handshake(void);
 
- TaskHandle_t xHandleHandShake = NULL;
- TaskHandle_t xHandleBluetooth = NULL;
- TaskHandle_t xHandleAFEC = NULL;
-
-
+TaskHandle_t xHandleHandShake = NULL;
+TaskHandle_t xHandleBluetooth = NULL;
+TaskHandle_t xHandleAFEC = NULL;
 
 SemaphoreHandle_t xSemaphoreBut;
 
